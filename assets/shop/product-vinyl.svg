@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" fill="none">
+  <rect width="800" height="600" fill="#0D0C0C"/>
+  <circle cx="400" cy="300" r="160" fill="#121212" stroke="#2a2a2a" stroke-width="2"/>
+  <circle cx="400" cy="300" r="160" fill="url(#grooves)" opacity="0.9"/>
+  <circle cx="400" cy="300" r="52" fill="#D05033" stroke="#080808" stroke-width="3"/>
+  <circle cx="400" cy="300" r="14" fill="#0D0C0C"/>
+  <defs>
+    <radialGradient id="grooves" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#151515"/>
+      <stop offset="3%" stop-color="#262626"/>
+      <stop offset="6%" stop-color="#151515"/>
+      <stop offset="100%" stop-color="#151515"/>
+    </radialGradient>
+  </defs>
+</svg>

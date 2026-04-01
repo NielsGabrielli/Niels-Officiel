@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "intro": "",
+  "shopUrl": "https://www.instagram.com/niels.officiel/",
+  "shopCtaLabel": "Toute la boutique",
+  "cmsCtaLabel": "Voir la fiche produit",
+  "products": [
+    {
+      "id": "p1",
+      "title": "T-shirt « Niels »",
+      "description": "Coupe unisexe — sérigraphie terracotta.",
+      "detail": "Coton bio, coupe confortable, logo sérigraphié couleur terracotta. Lavage 30° à l’envers.",
+      "price": "32 €",
+      "image": "assets/shop/product-tshirt.svg",
+      "cmsPageUrl": "/produit/t-shirt-niels"
+    },
+    {
+      "id": "p2",
+      "title": "Vinyle / CD",
+      "description": "Édition limitée — insert paroles.",
+      "detail": "Disque ou CD selon disponibilité, jaquette carton, insert avec paroles.",
+      "price": "À partir de 18 €",
+      "image": "assets/shop/product-vinyl.svg",
+      "cmsPageUrl": "/produit/vinyle-cd"
+    },
+    {
+      "id": "p3",
+      "title": "Affiche tournée",
+      "description": "Papier crème — noir profond.",
+      "detail": "Format A2, impression offset, papier crème texturé.",
+      "price": "15 €",
+      "image": "assets/shop/product-poster.svg",
+      "cmsPageUrl": "/produit/affiche-tournee"
+    }
+  ]
+}

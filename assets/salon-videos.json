@@ -1,0 +1,37 @@
+{
+  "channelId": "UC2kQJLBeSQ5dcpI1VsUkMAQ",
+  "channelUrl": "https://www.youtube.com/@niels.officiel/videos",
+  "updatedAt": "2026-03-23T23:12:07.871Z",
+  "videos": [
+    {
+      "id": "o-jiopnfyR8",
+      "title": "Charles Aznavour - La Bohème (Niels Feat. Zooz)",
+      "thumbnail": "https://i4.ytimg.com/vi/o-jiopnfyR8/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=o-jiopnfyR8"
+    },
+    {
+      "id": "e-b0vMBRK8A",
+      "title": "Manon Bonnes - Dans Mon Salon (Quand tu danses - Jean-Jacques Goldman)",
+      "thumbnail": "https://i2.ytimg.com/vi/e-b0vMBRK8A/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=e-b0vMBRK8A"
+    },
+    {
+      "id": "jEhII8IcpL0",
+      "title": "Zooz & Clément - Dans Mon Salon (Aznavour - La Bohème)",
+      "thumbnail": "https://i3.ytimg.com/vi/jEhII8IcpL0/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=jEhII8IcpL0"
+    },
+    {
+      "id": "HkW3kF31P6I",
+      "title": "Georges Brassens - Oncle Archibald (Niels Feat. Nicolas Majeune)",
+      "thumbnail": "https://i1.ytimg.com/vi/HkW3kF31P6I/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=HkW3kF31P6I"
+    },
+    {
+      "id": "NWCtapFu2T0",
+      "title": "Nicolas Majeune - Dans Mon Salon (Oncle Archibald - Georges Brassens)",
+      "thumbnail": "https://i3.ytimg.com/vi/NWCtapFu2T0/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=NWCtapFu2T0"
+    }
+  ]
+}

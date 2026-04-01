@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#D05033" />
+    <title>Niels — Auteur / Compositeur / Inteprète</title>
+    <meta name="description" content="Niels — Auteur / Compositeur / Interprète. Chansons comme des confidences, à mi-voix…" />
+    <link rel="canonical" href="https://niels-music.fr" />
+
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="favicon.ico" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://niels-music.fr" />
+    <meta property="og:title" content="Niels — Auteur / Compositeur / Interprète" />
+    <meta property="og:description" content="Chansons comme des confidences, à mi-voix…" />
+    <meta property="og:image" content="https://niels-music.fr/og-image.jpg" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Niels — Auteur / Compositeur / Interprète" />
+    <meta name="twitter:description" content="Chansons comme des confidences, à mi-voix…" />
+    <meta name="twitter:image" content="https://niels-music.fr/og-image.jpg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" />
+
+    <link rel="stylesheet" href="./dist/tailwind.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./main.js"></script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Aller au contenu</a>
+
+    <header class="header" id="top" data-elevate>
+      <nav class="nav" aria-label="Navigation principale">
+        <div class="nav__side nav__side--left">
+          <a class="nav__link" href="#music">Musique</a>
+          <a class="nav__link" href="#concerts">Concerts</a>
+        </div>
+
+        <a class="nav__brand" href="#top" aria-label="Retour en haut">
+          <img src="assets/logo-white.svg" alt="Niels" style="height: 26px; width: auto;" />
+        </a>
+
+        <div class="nav__side nav__side--right">
+          <a class="nav__link" href="#pro">Espace pro</a>
+          <a class="nav__link" href="#shop">Boutique</a>
+          <a class="nav__link" href="#contact">Contact</a>
+        </div>
+
+        <button class="nav__burger" aria-label="Ouvrir le menu" aria-expanded="false">
+          <span class="burger__bar"></span>
+          <span class="burger__bar"></span>
+          <span class="burger__bar"></span>
+        </button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-label="Introduction">
+        <div class="hero__media" aria-hidden="true">
+          <div class="hero__grain"></div>
+          <div class="hero__vignette"></div>
+          <div class="hero__glow"></div>
+        </div>
+
+        <div class="container hero__content">
+          <div class="hero__inner">
+            <h1 class="hero__title-wrap">
+              <img
+                src="assets/logo-orange.svg"
+                alt="Niels"
+                class="hero__logo"
+                width="520"
+                height="180"
+              />
+            </h1>
+            <p class="subtitle">AUTEUR&nbsp;|&nbsp;COMPOSITEUR&nbsp;|&nbsp;INTERPRÈTE</p>
+            <div class="hero__actions">
+              <a class="btn btn--primary" href="#music">Explorer l’univers</a>
+            </div>
+            <p class="hero__scroll" aria-hidden="true">
+              <span class="hero__scroll-label">Défiler</span>
+              <span class="hero__scroll-icon" aria-hidden="true">
+                <svg width="24" height="28" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path
+                    d="M6 9l6 6 6-6M6 16l6 6 6-6"
+                    stroke="currentColor"
+                    stroke-width="1.65"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="manifest" aria-label="Manifeste">
+        <div class="container">
+          <p class="quote">
+            “Des chansons comme des confidences, à mi-voix et à découvert.”
+          </p>
+        </div>
+      </section>
+
+      <!-- Section Bio supprimée à la demande -->
+
+      <section class="section" id="music" aria-label="Musique">
+        <div class="container section__grid section__grid--reverse">
+          <div class="reveal" style="display: flex; align-items: flex-end; justify-content: center; position: relative; margin-bottom: -78px; z-index: 0;">
+            <img class="music__parallax-img" src="assets/trompete.png" alt="Niels à la trompette" style="width: 115%; max-width: 130%; height: auto; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5)); transform-origin: bottom center; transform: translate3d(-8%, var(--music-parallax-y, 0px), 0);" />
+          </div>
+          <div class="content reveal" style="position: relative; z-index: 10;">
+            <h2 class="section__title" style="color: var(--terracotta);">Musique</h2>
+            <p class="body">
+              <strong style="color: #fff;">Niels</strong> est un auteur-compositeur-interprète français dont la musique mêle chanson à texte, folk, jazz et accents pop.
+            </p>
+            <p class="body">
+              À travers une voix douce et une écriture sensible, il propose un univers intime et poétique, habité par l’émotion, la narration et un rapport sincère à la scène comme à l’enregistrement.
+            </p>
+            <div class="actions">
+              <a class="btn btn--primary" href="https://open.spotify.com/intl-fr/artist/5C0d46d4MEqwlUAzIjceqD" target="_blank" rel="noopener noreferrer" aria-label="Écouter sur Spotify">Spotify</a>
+              <a class="btn btn--secondary" href="https://www.youtube.com/@niels.officiel" target="_blank" rel="noopener noreferrer" aria-label="Regarder sur YouTube">YouTube</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--salon" id="salon" aria-label="Dans mon salon">
+        <div class="salon__particles" aria-hidden="true"></div>
+        <div class="container salon">
+          <div class="salon__title reveal">
+            <h2 class="salon__logo">
+              <img src="assets/dms-orange.svg" alt="Dans Mon Salon" width="520" height="180" />
+            </h2>
+            <p class="body salon__intro">
+              Des reprises acoustiques,<br />
+              des confidences, et des instants vrais.<br />
+              Bienvenue dans mon salon.
+            </p>
+            <div class="salon__actions">
+              <a class="btn btn--primary" href="https://www.youtube.com/@niels.officiel/videos" target="_blank" rel="noopener noreferrer">Let’s DANS MON SALON</a>
+              <a class="btn btn--secondary" href="#contact">Artiste&nbsp;? Venir dans mon salon&nbsp;?</a>
+            </div>
+          </div>
+
+          <div class="salon__gallery-wrap">
+            <div
+              class="salon__gallery salon__gallery--loading"
+              id="salonGallery"
+              aria-label="Vidéos Dans mon salon"
+              aria-busy="true"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="discographie" aria-label="Discographie">
+        <div class="container discography">
+          <div class="discography__head">
+            <h2 class="section__title">Discographie</h2>
+            <a class="btn btn--ghost" href="#" aria-label="Voir plus de sorties">Voir plus</a>
+          </div>
+
+          <div class="discography__grid">
+            <div class="album reveal" aria-label="Visuel EP/Album">
+              <div class="album__cover" style="display: flex; align-items: center; justify-content: center; background: #0c0c0c; overflow: hidden;">
+                <span class="album__tag" style="z-index: 10;">EP</span>
+                
+                <!-- Le Vinyle -->
+                <div
+                  id="vinylDisc"
+                  class="vinyl-disc"
+                  style="width: 85%; aspect-ratio: 1/1; border-radius: 50%; background: repeating-radial-gradient(#151515, #151515 2px, #262626 3px, #151515 4px); box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 10px rgba(0,0,0,0.8); position: relative; display: flex; align-items: center; justify-content: center;"
+                >
+                  <!-- Le centre du Vinyle (Terracotta) -->
+                  <div style="width: 32%; aspect-ratio: 1/1; border-radius: 50%; background: var(--terracotta); border: 2px solid #080808; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 8px rgba(0,0,0,0.3);">
+                    <div style="width: 12%; aspect-ratio: 1/1; background: #0c0c0c; border-radius: 50%;"></div>
+                  </div>
+                  <!-- Reflets de lumière sur le vinyle -->
+                  <div style="position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(transparent 10%, rgba(255,255,255,0.08) 15%, transparent 20%, transparent 60%, rgba(255,255,255,0.08) 65%, transparent 70%); mix-blend-mode: screen; pointer-events: none;"></div>
+                </div>
+                
+              </div>
+              <div class="album__meta">
+                <div class="album__title" style="display: flex; align-items: center; gap: 8px;">
+                  <svg id="vinylDiscIcon" class="vinyl-disc__icon" style="color: var(--terracotta);" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"></circle>
+                    <circle cx="12" cy="12" r="6" stroke-dasharray="6 6"></circle>
+                  </svg>
+                  À nos aînés
+                </div>
+                <div class="album__year">2026</div>
+              </div>
+            </div>
+
+            <div class="player reveal" aria-label="Lecteur Spotify officiel">
+              <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/artist/5C0d46d4MEqwlUAzIjceqD?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+              <p class="fineprint body--muted" style="margin: 10px 2px 0;">
+                Le lecteur ne répond pas ? <a href="https://open.spotify.com/artist/5C0d46d4MEqwlUAzIjceqD" target="_blank" rel="noopener noreferrer">Ouvrir sur Spotify</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--concerts" id="concerts" aria-label="Agenda et concerts">
+        <div class="container container--concerts">
+          <div class="section__head section__head--center">
+            <h2 class="section__title">Agenda / Concerts</h2>
+            <p class="body body--muted" id="concertsIntro"></p>
+          </div>
+
+          <div
+            class="concerts reveal"
+            id="concertsMount"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label="Liste des concerts"
+          ></div>
+        </div>
+      </section>
+
+      <section class="section" id="shop" aria-label="Boutique">
+        <div class="container">
+          <div class="section__head">
+            <h2 class="section__title">Boutique</h2>
+            <p class="body body--muted" id="shopIntro" hidden></p>
+          </div>
+
+          <div
+            class="products reveal"
+            id="shopProducts"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label="Produits"
+          ></div>
+
+          <div class="center">
+            <a class="btn btn--primary" id="shopCta" href="#contact" aria-label="Accéder au shop">Le shop</a>
+          </div>
+        </div>
+
+        <div
+          class="shop-modal"
+          id="shopModal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="shopModalTitle"
+          hidden
+        >
+          <div class="shop-modal__backdrop" data-shop-modal-close tabindex="-1"></div>
+          <div class="shop-modal__panel">
+            <button type="button" class="shop-modal__close" id="shopModalClose" aria-label="Fermer la fenêtre">
+              <span aria-hidden="true">×</span>
+            </button>
+            <div class="shop-modal__media" id="shopModalMedia"></div>
+            <div class="shop-modal__body">
+              <h3 class="h3" id="shopModalTitle"></h3>
+              <p class="body body--muted" id="shopModalDesc"></p>
+              <p class="body body--muted shop-modal__detail" id="shopModalDetail" hidden></p>
+              <p class="product__price shop-modal__price" id="shopModalPrice" hidden></p>
+              <a class="btn btn--primary shop-modal__cms" id="shopModalCms" href="#" hidden>Voir la fiche produit</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--contact" id="contact" aria-label="Contact et newsletter">
+        <div class="container split">
+          <div class="panel panel--cream reveal">
+            <div class="panel__stack">
+              <h2 class="section__title">Contact</h2>
+              <p class="body body--muted" style="margin-top: -16px; margin-bottom: 8px;">Un projet, une question, ou un mot doux ?</p>
+              <form class="form" id="contactForm" novalidate>
+                <label class="field">
+                  <span class="field__label">Nom</span>
+                  <input class="field__input" name="name" placeholder="Votre nom" autocomplete="name" />
+                </label>
+
+                <label class="field">
+                  <span class="field__label">Email</span>
+                  <input class="field__input" name="email" type="email" placeholder="votre@email.com" autocomplete="email" />
+                </label>
+
+                <label class="field">
+                  <span class="field__label">Téléphone</span>
+                  <input class="field__input" name="phone" type="tel" placeholder="06 XX XX XX XX" autocomplete="tel" />
+                </label>
+
+                <label class="field">
+                  <span class="field__label">Message</span>
+                  <textarea class="field__input field__input--area" name="message" placeholder="Parlez-moi de votre projet..." rows="5"></textarea>
+                </label>
+
+                <button class="btn btn--primary" type="submit">Envoyer le message</button>
+                <p class="fineprint" id="contactHint" role="status" aria-live="polite"></p>
+              </form>
+            </div>
+          </div>
+
+          <div class="panel panel--dark reveal" id="pro" aria-label="Soundletter / Espace pro">
+            <div class="panel__stack">
+              <div>
+                <h2 class="section__title section__title--light">Soundletter</h2>
+                <p class="body body--muted body--light">
+                  Une lettre rare: coulisses, dates, sorties. Zéro bruit, juste l’essentiel.
+                </p>
+              </div>
+
+              <form class="form form--dark" id="newsletterForm" novalidate>
+                <label class="field">
+                  <span class="field__label field__label--light">Email</span>
+                  <input
+                    class="field__input field__input--dark"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="ton@email.com"
+                    required
+                  />
+                </label>
+
+                <label class="check">
+                  <input class="check__box" type="checkbox" name="consent" />
+                  <span class="check__text">
+                    J’accepte de recevoir des emails de Niels (désinscription à tout moment).
+                  </span>
+                </label>
+
+                <button class="btn btn--secondary" type="submit">S’inscrire</button>
+                <p class="fineprint fineprint--light" id="newsletterHint" role="status" aria-live="polite"></p>
+              </form>
+
+              <div class="pro">
+                <h3 class="h3 h3--light">Espace pro</h3>
+                <p class="body body--muted body--light">
+                  Press kit, fiche technique, demandes de booking.
+                </p>
+                <a class="btn btn--ghost btn--ghostLight" href="#" aria-label="Accéder à l'espace pro">
+                  Accéder
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" aria-label="Pied de page">
+      <div class="container footer__grid">
+        <div class="footer__col">
+          <div class="footer__brand">
+            <img src="assets/logo-white.svg" alt="Niels" style="height: 24px; width: auto; margin-bottom: 12px; display: block;" />
+          </div>
+          <p class="body body--muted body--small">
+            Auteur, compositeur, interprète.<br>
+            Des chansons comme des confidences, à mi-voix…
+          </p>
+          <div class="socials">
+            <a href="https://www.instagram.com/niels.officiel/" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram">Insta</a>
+            <a href="https://open.spotify.com/intl-fr/artist/5C0d46d4MEqwlUAzIjceqD" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Spotify">Spotify</a>
+            <a href="https://www.youtube.com/@niels.officiel" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="YouTube">YouTube</a>
+          </div>
+        </div>
+
+        <div class="footer__col">
+          <h4 class="footer__title">Navigation</h4>
+          <nav class="footer__nav">
+            <a href="#music">Musique</a>
+            <a href="#salon">Dans mon salon</a>
+            <a href="#concerts">Concerts</a>
+          </nav>
+        </div>
+
+        <div class="footer__col">
+          <h4 class="footer__title">Liens pratiques</h4>
+          <nav class="footer__nav">
+            <a href="#shop">Boutique</a>
+            <a href="#pro">Espace professionnel</a>
+            <a href="#contact">Contact & Newsletter</a>
+          </nav>
+        </div>
+      </div>
+      
+      <div class="container footer__bottom">
+        <div class="footer__copyright">
+          &copy; 2026 Niels. Tous droits réservés.
+        </div>
+        <div class="footer__links">
+          <a class="footer__link" href="#">Mentions légales</a>
+          <a class="footer__link" href="#">Confidentialité</a>
+          <a class="footer__link" href="#top">Haut de page &uarr;</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+
