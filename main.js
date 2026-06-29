@@ -219,15 +219,20 @@ function formatConcertDateDisplay(c) {
 }
 
 async function loadConcertsData() {
-  try {
-    const raw = localStorage.getItem(CONCERTS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.concerts)) return parsed;
+  const preview = new URLSearchParams(window.location.search).has("preview");
+
+  if (preview) {
+    try {
+      const raw = localStorage.getItem(CONCERTS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.concerts)) return parsed;
+      }
+    } catch {
+      /* JSON public par défaut */
     }
-  } catch {
-    /* fichier JSON par défaut */
   }
+
   const res = await fetch("./assets/concerts.json", { cache: "no-store" });
   if (!res.ok) throw new Error(String(res.status));
   return res.json();

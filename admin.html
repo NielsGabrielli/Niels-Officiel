@@ -140,7 +140,7 @@
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
         <div class="admin-card" style="text-align: center;">
-          <div style="font-size: 32px; font-weight: 700; color: var(--cream); margin-bottom: 8px;">3</div>
+          <div style="font-size: 32px; font-weight: 700; color: var(--cream); margin-bottom: 8px;" id="dashboardConcertsFutureCount">0</div>
           <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,.5);">Concerts à venir</div>
         </div>
         <div class="admin-card" style="text-align: center;">
@@ -188,6 +188,7 @@
           Si le champ est vide, le site affichera un lien vers la page contact.
           <br /><br />
           <strong>Enregistrer l’agenda</strong> sauvegarde dans ce navigateur et propose un fichier <code>concerts.json</code> à placer dans <code>assets/concerts.json</code> pour la mise en ligne.
+          Utilisez <strong>Aperçu sur le site</strong> pour voir le rendu avant publication.
         </p>
         <div class="form-group">
           <label class="form-label" for="concertsIntroAdmin">Texte sous le titre « Agenda / Concerts » (optionnel)</label>
@@ -205,10 +206,12 @@
           </thead>
           <tbody id="concertsAdminRows"></tbody>
         </table>
-        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; align-items: center;">
           <button type="button" class="add-new" id="concertsAddRow" style="flex: 1; min-width: 200px;">+ Ajouter une date</button>
           <button type="button" class="action-btn delete" id="concertsDeletePastBtn">Supprimer les dates passées</button>
+          <button type="button" class="action-btn" id="concertsPreviewBtn">Aperçu sur le site</button>
           <button type="button" class="btn-save" id="concertsSaveBtn">Enregistrer l’agenda</button>
+          <span style="font-size: 12px; color: rgba(255,255,255,.45);" id="concertsSaveHint"></span>
         </div>
       </div>
     </div>
@@ -635,8 +638,10 @@
         });
         const pEl = document.getElementById('dashboardPastCount');
         const fEl = document.getElementById('dashboardFutureCount');
+        const fCardEl = document.getElementById('dashboardConcertsFutureCount');
         if (pEl) pEl.textContent = String(past);
         if (fEl) fEl.textContent = String(future);
+        if (fCardEl) fCardEl.textContent = String(future);
       }
 
       function refreshPastRowStyles() {
@@ -690,8 +695,11 @@
             tbody.appendChild(concertsRowTemplate(row));
           });
         }
-        tbody.addEventListener('change', refreshPastRowStyles);
-        tbody.addEventListener('input', refreshPastRowStyles);
+        if (!tbody.dataset.concertsWired) {
+          tbody.dataset.concertsWired = '1';
+          tbody.addEventListener('change', refreshPastRowStyles);
+          tbody.addEventListener('input', refreshPastRowStyles);
+        }
         refreshPastRowStyles();
       }
 
@@ -731,7 +739,17 @@
         refreshPastRowStyles();
       }
 
-      function saveConcertsAdmin() {
+      function downloadConcertsJson(payload) {
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'concerts.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      function saveConcertsAdmin(options) {
+        const opts = options || {};
         const payload = collectConcertsPayload();
         try {
           localStorage.setItem(CONCERTS_KEY, JSON.stringify(payload));
@@ -739,12 +757,7 @@
           alert('Impossible d’enregistrer dans le navigateur (stockage plein ou privé).');
           return;
         }
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'concerts.json';
-        a.click();
-        URL.revokeObjectURL(a.href);
+        if (opts.download !== false) downloadConcertsJson(payload);
         const btn = document.getElementById('concertsSaveBtn');
         if (btn) {
           const t = btn.textContent;
@@ -754,6 +767,15 @@
             btn.textContent = t;
             btn.style.background = '';
           }, 2200);
+        }
+        const hint = document.getElementById('concertsSaveHint');
+        if (hint) {
+          hint.textContent = opts.download === false
+            ? 'Agenda mis à jour dans ce navigateur.'
+            : 'Remplacez assets/concerts.json sur le serveur avec le fichier téléchargé, puis redéployez.';
+          setTimeout(() => {
+            hint.textContent = '';
+          }, 8000);
         }
       }
 
@@ -782,13 +804,18 @@
       if (saveConcertsBtn) saveConcertsBtn.addEventListener('click', saveConcertsAdmin);
 
       document.getElementById('concertsDeletePastBtn')?.addEventListener('click', removePastConcertRows);
-      document.getElementById('dashboardDeletePastConcerts')?.addEventListener('click', () => {
-        removePastConcertRows();
+      document.getElementById('concertsPreviewBtn')?.addEventListener('click', () => {
         try {
           localStorage.setItem(CONCERTS_KEY, JSON.stringify(collectConcertsPayload()));
         } catch (e) {
-          alert('Impossible d’enregistrer dans le navigateur.');
+          alert('Impossible de préparer l’aperçu (stockage navigateur indisponible).');
+          return;
         }
+        window.open('index.html?preview=1#concerts', '_blank', 'noopener');
+      });
+      document.getElementById('dashboardDeletePastConcerts')?.addEventListener('click', () => {
+        removePastConcertRows();
+        saveConcertsAdmin();
       });
       document.getElementById('dashboardOpenConcertsTab')?.addEventListener('click', () => {
         document.querySelector('.nav-item[data-target="tab-concerts"]')?.click();

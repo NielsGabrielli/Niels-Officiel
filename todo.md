@@ -12,7 +12,8 @@
 - [ ] **Visuel musique** — Remplacer le placeholder `.media--landscape` par un visuel cover ou scène (section Musique)
 - [ ] **Liens streaming** — Remplacer `href="#"` des boutons Spotify et YouTube par les vraies URLs
 - [ ] **Discographie** — Renseigner le titre, l'année et la cover art du/des EP/albums
-- [ ] **Concerts** — Mettre les vraies dates, lieux et liens de billetterie (remplacer les lignes fictives)
+- [x] **Concerts** — Agenda géré via l’admin (`admin.html` → Section Concerts) : ajout/suppression de dates, export `concerts.json`, aperçu `?preview=1`, affichage public depuis `assets/concerts.json`
+- [ ] **Concerts (contenu)** — Renseigner les vraies dates, lieux et liens de billetterie dans l’admin puis déployer le `concerts.json` généré
 - [ ] **Boutique** — Brancher les cartes produits à un vrai shop (Shopify, Bigcartel…) ou supprimer la section si pas encore active
 - [ ] **Espace pro** — Créer et lier un vrai press kit (PDF) et une fiche technique derrière le bouton "Accéder"
 - [ ] **Mentions légales** — Créer une page (ou modale) avec les mentions légales réelles
