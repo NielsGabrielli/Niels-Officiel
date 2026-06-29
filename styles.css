@@ -644,8 +644,10 @@ a{color:inherit}
 }
 .salon__logo__mark{
   display: block;
-  width: min(100%, 520px);
+  width: clamp(240px, 78%, 500px);
   max-width: 100%;
+  margin-right: auto;
+  margin-left: 0;
   height: clamp(96px, 14vw, 160px);
   background-color: var(--terracotta);
   -webkit-mask-image: url('./assets/dms-logo.png');
@@ -654,9 +656,9 @@ a{color:inherit}
   mask-size: contain;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  transform-origin: center center;
+  -webkit-mask-position: left center;
+  mask-position: left center;
+  transform-origin: left center;
   will-change: transform;
   animation: salonLogoPop 3.2s ease-in-out infinite;
 }
