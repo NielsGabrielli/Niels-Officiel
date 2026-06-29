@@ -148,8 +148,8 @@ function wireHeroParallax() {
 
 /* ── Music image parallax (subtil) ── */
 function wireMusicParallax() {
-  const img = $(".music__parallax-img");
-  if (!img) return;
+  const media = $(".music__media");
+  if (!media) return;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   if (reduceMotion.matches) return;
 
@@ -159,7 +159,7 @@ function wireMusicParallax() {
     raf = window.requestAnimationFrame(() => {
       raf = 0;
       const y = Math.min(24, window.scrollY * 0.08);
-      img.style.setProperty("--music-parallax-y", `${y}px`);
+      media.style.setProperty("--music-parallax-y", `${y}px`);
     });
   };
 

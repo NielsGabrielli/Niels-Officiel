@@ -389,6 +389,37 @@ a{color:inherit}
 .section{
   padding: 78px 0;
 }
+.section--music{
+  position: relative;
+  overflow: hidden;
+  padding: clamp(72px, 10vw, 110px) 0;
+  border-bottom: 1px solid rgba(229,210,187,.10);
+}
+.music__media{
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.58) 42%, rgba(0,0,0,.18) 72%, rgba(0,0,0,.08) 100%),
+    url('./assets/fond-section-2.jpg') center / cover no-repeat;
+  transform: translate3d(0, var(--music-parallax-y, 0px), 0) scale(1.04);
+  transform-origin: center center;
+}
+.music__content{
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+.music__content .content{
+  width: min(100%, 560px);
+  text-align: left;
+}
+.section__title--music{
+  color: var(--terracotta);
+}
+.section--music .actions{
+  justify-content: flex-start;
+}
 .section--bio{background: var(--g-900)}
 .section--salon{
   position: relative;
@@ -1555,7 +1586,7 @@ body.shop-modal-open{
   .hero__content .hero__actions,
   .hero__content .hero__scroll{animation:none}
   .hero__scroll-icon{animation:none}
-  .music__parallax-img{transform: translate3d(-8%, 0, 0) !important}
+  .music__media{transform: translate3d(0, 0, 0) scale(1.04) !important}
 }
 
 @media (max-width: 600px){
