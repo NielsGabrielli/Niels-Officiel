@@ -86,6 +86,24 @@
       border: 1px solid rgba(229,210,187,.15);
       background: rgba(0,0,0,.4);
     }
+    .shop-product-block.is-unpublished {
+      opacity: 0.72;
+      border-style: dashed;
+    }
+    .shop-status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      background: rgba(229,210,187,.08);
+      color: rgba(229,210,187,.85);
+    }
+    .shop-status-pill.is-active {
+      background: rgba(40,167,69,.15);
+      color: #7ddea0;
+    }
   </style>
 </head>
 <body>
@@ -136,6 +154,21 @@
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
           <button type="button" class="action-btn delete" id="dashboardDeletePastConcerts">Supprimer les dates passées</button>
           <button type="button" class="action-btn" id="dashboardOpenConcertsTab">Ouvrir la section Concerts</button>
+        </div>
+      </div>
+      <div class="admin-card" id="dashboardShopCard" style="margin-bottom: 24px;">
+        <h3 style="margin: 0 0 12px; font-size: 14px;">Boutique</h3>
+        <p style="margin: 0 0 10px; font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.5;">
+          <strong id="dashboardShopPublished">0</strong> produit(s) publié(s) sur <strong id="dashboardShopTotal">0</strong>
+          · <span class="shop-status-pill" id="dashboardShopCatalogPill">Section accueil</span>
+        </p>
+        <p style="margin: 0 0 16px; font-size: 13px; color: rgba(255,255,255,.5); line-height: 1.5;">
+          Jusqu’à 3 produits&nbsp;: section sur l’accueil uniquement. Au-delà&nbsp;: page <code style="font-size:12px;">boutique.html</code> + bouton «&nbsp;Toute la boutique&nbsp;».
+        </p>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <button type="button" class="action-btn" id="dashboardOpenShopTab">Gérer la boutique</button>
+          <button type="button" class="action-btn" id="shopPreviewHomeBtn">Aperçu accueil</button>
+          <button type="button" class="action-btn" id="shopPreviewCatalogBtn">Aperçu catalogue</button>
         </div>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
@@ -222,8 +255,14 @@
         <h3>Paramètres boutique</h3>
         <p style="font-size: 13px; color: rgba(255,255,255,.6); margin: -8px 0 20px; line-height: 1.55;">
           Les données sont enregistrées dans ce navigateur et un fichier <code style="font-size: 12px;">shop.json</code> est proposé au téléchargement — à déposer dans <code style="font-size: 12px;">assets/shop.json</code> pour la mise en ligne.
-          <strong style="color: rgba(229,210,187,.85);">Image</strong> : chemin relatif depuis la racine du site (ex. <code style="font-size: 12px;">assets/shop/photo.jpg</code>).
-          <strong style="color: rgba(229,210,187,.85);">Page CMS</strong> : URL complète <code>https://…</code> ou chemin du site <code>/produit/slug</code>.
+          <br /><br />
+          <strong style="color: rgba(229,210,187,.85);">≤ 3 produits publiés</strong>&nbsp;: uniquement la section boutique sur l’accueil.
+          <strong style="color: rgba(229,210,187,.85);">&gt; 3 produits</strong>&nbsp;: page <code style="font-size:12px;">boutique.html</code>, lien navbar et bouton «&nbsp;Toute la boutique&nbsp;».
+          Les 3 premiers produits (ordre ci-dessous) apparaissent sur l’accueil.
+        </p>
+        <p style="margin: 0 0 18px; font-size: 13px; color: rgba(255,255,255,.55);">
+          Statut actuel&nbsp;: <span class="shop-status-pill" id="shopTabCatalogPill">Section accueil</span>
+          · <span id="shopTabCountLabel">0 produit publié</span>
         </p>
         <div class="form-group">
           <label class="form-label" for="shopIntroAdmin">Texte d’intro sous le titre « Boutique » (optionnel)</label>
@@ -231,16 +270,16 @@
         </div>
         <div class="shop-admin-grid">
           <div class="form-group">
-            <label class="form-label" for="shopUrlAdmin">URL du bouton global (boutique / catalogue)</label>
-            <input type="url" class="form-input" id="shopUrlAdmin" placeholder="https://… ou laisser vide → lien contact" />
+            <label class="form-label" for="shopUrlAdmin">URL externe optionnelle (page catalogue uniquement)</label>
+            <input type="url" class="form-input" id="shopUrlAdmin" placeholder="https://… (Shopify, Instagram…)" />
           </div>
           <div class="form-group">
-            <label class="form-label" for="shopCtaLabelAdmin">Libellé du bouton global</label>
+            <label class="form-label" for="shopCtaLabelAdmin">Libellé du bouton « Toute la boutique »</label>
             <input type="text" class="form-input" id="shopCtaLabelAdmin" placeholder="Toute la boutique" />
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label" for="shopCmsCtaLabelAdmin">Libellé du bouton dans la modale (vers la page produit CMS)</label>
+          <label class="form-label" for="shopCmsCtaLabelAdmin">Libellé du bouton dans la modale produit</label>
           <input type="text" class="form-input" id="shopCmsCtaLabelAdmin" placeholder="Voir la fiche produit" />
         </div>
       </div>
@@ -248,11 +287,14 @@
       <div class="admin-card">
         <h3>Produits</h3>
         <p style="font-size: 13px; color: rgba(255,255,255,.55); margin: -8px 0 18px;">
-          Chaque produit apparaît sur le site sous forme de carte ; le clic ouvre une modale avec le texte détaillé et le bouton vers la page CMS.
+          Ordre d’affichage = ordre sur le site. Image&nbsp;: chemin relatif (ex. <code style="font-size: 12px;">assets/shop/photo.jpg</code>).
+          Page CMS&nbsp;: <code>/produit/slug</code> ou URL complète.
         </p>
         <div id="shopProductsAdmin"></div>
         <button type="button" class="add-new" id="shopAddProduct">+ Ajouter un produit</button>
         <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+          <button type="button" class="action-btn" id="shopPreviewHomeTabBtn">Aperçu accueil</button>
+          <button type="button" class="action-btn" id="shopPreviewCatalogTabBtn">Aperçu catalogue</button>
           <button type="button" class="btn-save" id="shopSaveBtn">Enregistrer la boutique</button>
           <span style="font-size: 12px; color: rgba(255,255,255,.45);" id="shopSaveHint"></span>
         </div>
@@ -382,9 +424,21 @@
       }
 
       const SHOP_KEY = 'niels_shop_v1';
+      const SHOP_HOMEPAGE_LIMIT = 3;
 
       function shopProductUid() {
         return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      }
+
+      function countPublishedShopProducts(products) {
+        return (Array.isArray(products) ? products : []).filter((p) => p && p.published !== false).length;
+      }
+
+      function syncShopProductBlockState(block) {
+        if (!block) return;
+        const publishedEl = block.querySelector('[data-field="published"]');
+        const isPublished = publishedEl ? publishedEl.checked : true;
+        block.classList.toggle('is-unpublished', !isPublished);
       }
 
       function createShopProductBlock(row) {
@@ -392,9 +446,19 @@
         wrap.className = 'shop-product-block';
         const id = row.id || shopProductUid();
         wrap.dataset.id = id;
+        const isPublished = row.published !== false;
+        if (!isPublished) wrap.classList.add('is-unpublished');
         wrap.innerHTML = `
-          <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
-            <button type="button" class="action-btn delete" data-shop-remove>Supprimer ce produit</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button type="button" class="action-btn" data-shop-move="up" title="Monter">↑</button>
+              <button type="button" class="action-btn" data-shop-move="down" title="Descendre">↓</button>
+            </div>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,.75); margin:0;">
+              <input type="checkbox" data-field="published" ${isPublished ? 'checked' : ''} />
+              Publié sur le site
+            </label>
+            <button type="button" class="action-btn delete" data-shop-remove>Supprimer</button>
           </div>
           <div class="shop-admin-grid">
             <div class="form-group">
@@ -435,6 +499,7 @@
         `;
         const img = wrap.querySelector('[data-shop-preview]');
         const imgIn = wrap.querySelector('[data-field="image"]');
+        const publishedInput = wrap.querySelector('[data-field="published"]');
         function syncPreview() {
           const u = imgIn && imgIn.value ? imgIn.value.trim() : '';
           if (!img) return;
@@ -450,6 +515,12 @@
         }
         syncPreview();
         if (imgIn) imgIn.addEventListener('input', syncPreview);
+        if (publishedInput) {
+          publishedInput.addEventListener('change', () => {
+            syncShopProductBlockState(wrap);
+            updateDashboardShopStats();
+          });
+        }
         return wrap;
       }
 
@@ -459,7 +530,7 @@
         const ctaEl = document.getElementById('shopCtaLabelAdmin');
         const cmsCtaEl = document.getElementById('shopCmsCtaLabelAdmin');
         const payload = {
-          version: 2,
+          version: 3,
           intro: introEl ? String(introEl.value || '').trim() : '',
           shopUrl: urlEl ? String(urlEl.value || '').trim() : '',
           shopCtaLabel: ctaEl ? String(ctaEl.value || '').trim() : '',
@@ -481,6 +552,8 @@
           const price = get('price');
           const image = get('image');
           const cmsPageUrl = get('cmsPageUrl');
+          const publishedEl = block.querySelector('[data-field="published"]');
+          const published = publishedEl ? publishedEl.checked : true;
           if (!title && !description && !detail && !price && !image && !cmsPageUrl) return;
           payload.products.push({
             id: pid,
@@ -490,37 +563,67 @@
             price,
             image,
             cmsPageUrl,
+            published,
           });
         });
         return payload;
       }
 
-      function updateDashboardShopCount() {
-        const el = document.getElementById('dashboardShopCount');
-        if (!el) return;
-        try {
-          const n = collectShopPayload().products.length;
-          el.textContent = String(n);
-        } catch (e) {
-          el.textContent = '0';
+      function setShopCatalogPills(publishedCount) {
+        const active = publishedCount > SHOP_HOMEPAGE_LIMIT;
+        const label = active ? 'Page boutique active' : 'Section accueil uniquement';
+        ['dashboardShopCatalogPill', 'shopTabCatalogPill'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.textContent = label;
+          el.classList.toggle('is-active', active);
+        });
+      }
+
+      function updateDashboardShopStats() {
+        const payload = collectShopPayload();
+        const total = payload.products.length;
+        const published = countPublishedShopProducts(payload.products);
+        const countEl = document.getElementById('dashboardShopCount');
+        const publishedEl = document.getElementById('dashboardShopPublished');
+        const totalEl = document.getElementById('dashboardShopTotal');
+        const tabLabel = document.getElementById('shopTabCountLabel');
+        if (countEl) countEl.textContent = String(published);
+        if (publishedEl) publishedEl.textContent = String(published);
+        if (totalEl) totalEl.textContent = String(total);
+        if (tabLabel) {
+          tabLabel.textContent = published + ' produit' + (published > 1 ? 's' : '') + ' publié' + (published > 1 ? 's' : '');
         }
+        setShopCatalogPills(published);
+        document.querySelectorAll('.shop-product-block').forEach(syncShopProductBlockState);
+      }
+
+      function saveShopAdminToStorage() {
+        try {
+          localStorage.setItem(SHOP_KEY, JSON.stringify(collectShopPayload()));
+          return true;
+        } catch (e) {
+          alert('Impossible d’enregistrer dans le navigateur (stockage plein ou privé).');
+          return false;
+        }
+      }
+
+      function openShopPreview(target) {
+        if (!saveShopAdminToStorage()) return;
+        const url = target === 'catalog' ? 'boutique.html?preview=1' : 'index.html?preview=1#shop';
+        window.open(url, '_blank', 'noopener');
       }
 
       function saveShopAdmin() {
         const payload = collectShopPayload();
-        try {
-          localStorage.setItem(SHOP_KEY, JSON.stringify(payload));
-        } catch (e) {
-          alert('Impossible d’enregistrer dans le navigateur (stockage plein ou privé).');
-          return;
-        }
+        if (!saveShopAdminToStorage()) return;
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = 'shop.json';
         a.click();
         URL.revokeObjectURL(a.href);
-        updateDashboardShopCount();
+        updateDashboardShopStats();
         const btn = document.getElementById('shopSaveBtn');
         const hint = document.getElementById('shopSaveHint');
         if (btn) {
@@ -536,7 +639,7 @@
           hint.textContent = 'Remplacez assets/shop.json sur le serveur avec le fichier téléchargé.';
           setTimeout(function () {
             hint.textContent = '';
-          }, 6000);
+          }, 8000);
         }
       }
 
@@ -553,7 +656,7 @@
           } catch (e) {}
         }
         if (!data) {
-          data = { version: 2, intro: '', shopUrl: '', shopCtaLabel: '', cmsCtaLabel: '', products: [] };
+          data = { version: 3, intro: '', shopUrl: '', shopCtaLabel: '', cmsCtaLabel: '', products: [] };
         }
         const introA = document.getElementById('shopIntroAdmin');
         const urlA = document.getElementById('shopUrlAdmin');
@@ -574,12 +677,32 @@
             container.appendChild(createShopProductBlock(p));
           });
         }
-        updateDashboardShopCount();
+        updateDashboardShopStats();
+      }
+
+      function moveShopProductBlock(block, direction) {
+        const container = document.getElementById('shopProductsAdmin');
+        if (!container || !block) return;
+        const blocks = [...container.querySelectorAll('.shop-product-block')];
+        const index = blocks.indexOf(block);
+        if (index < 0) return;
+        if (direction === 'up' && index > 0) {
+          container.insertBefore(block, blocks[index - 1]);
+        } else if (direction === 'down' && index < blocks.length - 1) {
+          container.insertBefore(blocks[index + 1], block);
+        }
+        updateDashboardShopStats();
       }
 
       const shopProductsAdmin = document.getElementById('shopProductsAdmin');
       if (shopProductsAdmin) {
         shopProductsAdmin.addEventListener('click', function (e) {
+          const moveBtn = e.target.closest('[data-shop-move]');
+          if (moveBtn) {
+            const block = moveBtn.closest('.shop-product-block');
+            if (block) moveShopProductBlock(block, moveBtn.getAttribute('data-shop-move'));
+            return;
+          }
           const btn = e.target.closest('[data-shop-remove]');
           if (!btn) return;
           const block = btn.closest('.shop-product-block');
@@ -587,7 +710,7 @@
           if (!shopProductsAdmin.querySelectorAll('.shop-product-block').length) {
             shopProductsAdmin.appendChild(createShopProductBlock({}));
           }
-          updateDashboardShopCount();
+          updateDashboardShopStats();
         });
       }
 
@@ -595,10 +718,17 @@
         const container = document.getElementById('shopProductsAdmin');
         if (!container) return;
         container.appendChild(createShopProductBlock({}));
-        updateDashboardShopCount();
+        updateDashboardShopStats();
       });
 
       document.getElementById('shopSaveBtn')?.addEventListener('click', saveShopAdmin);
+      document.getElementById('dashboardOpenShopTab')?.addEventListener('click', () => {
+        document.querySelector('.nav-item[data-target="tab-boutique"]')?.click();
+      });
+      document.getElementById('shopPreviewHomeBtn')?.addEventListener('click', () => openShopPreview('home'));
+      document.getElementById('shopPreviewCatalogBtn')?.addEventListener('click', () => openShopPreview('catalog'));
+      document.getElementById('shopPreviewHomeTabBtn')?.addEventListener('click', () => openShopPreview('home'));
+      document.getElementById('shopPreviewCatalogTabBtn')?.addEventListener('click', () => openShopPreview('catalog'));
 
       function concertIsPastAdminIso(iso) {
         if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
@@ -824,7 +954,7 @@
       loadConcertsAdmin();
       loadShopAdmin();
 
-      document.getElementById('shopProductsAdmin')?.addEventListener('input', updateDashboardShopCount);
+      document.getElementById('shopProductsAdmin')?.addEventListener('input', updateDashboardShopStats);
     });
   </script>
 </body>

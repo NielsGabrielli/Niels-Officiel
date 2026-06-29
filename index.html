@@ -52,7 +52,7 @@
 
         <div class="nav__side nav__side--right">
           <a class="nav__link" href="#pro">Espace pro</a>
-          <a class="nav__link" href="#shop">Boutique</a>
+          <a class="nav__link" href="#shop" data-shop-nav>Boutique</a>
           <a class="nav__link" href="#contact">Contact</a>
         </div>
 
@@ -139,7 +139,7 @@
         <div class="container salon">
           <div class="salon__title reveal">
             <h2 class="salon__logo">
-              <img src="assets/dms-orange.svg" alt="Dans Mon Salon" width="520" height="180" />
+              <span class="salon__logo__mark" role="img" aria-label="Dans Mon Salon"></span>
             </h2>
             <p class="body salon__intro">
               Des reprises acoustiques,<br />
@@ -171,23 +171,19 @@
 
           <div class="discography__grid">
             <div class="album reveal" aria-label="Visuel EP/Album">
-              <div class="album__cover" style="display: flex; align-items: center; justify-content: center; background: #0c0c0c; overflow: hidden;">
-                <span class="album__tag" style="z-index: 10;">EP</span>
-                
-                <!-- Le Vinyle -->
-                <div
-                  id="vinylDisc"
-                  class="vinyl-disc"
-                  style="width: 85%; aspect-ratio: 1/1; border-radius: 50%; background: repeating-radial-gradient(#151515, #151515 2px, #262626 3px, #151515 4px); box-shadow: 0 10px 40px rgba(0,0,0,0.9), inset 0 0 10px rgba(0,0,0,0.8); position: relative; display: flex; align-items: center; justify-content: center;"
-                >
-                  <!-- Le centre du Vinyle (Terracotta) -->
-                  <div style="width: 32%; aspect-ratio: 1/1; border-radius: 50%; background: var(--terracotta); border: 2px solid #080808; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 8px rgba(0,0,0,0.3);">
-                    <div style="width: 12%; aspect-ratio: 1/1; background: #0c0c0c; border-radius: 50%;"></div>
-                  </div>
-                  <!-- Reflets de lumière sur le vinyle -->
-                  <div style="position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(transparent 10%, rgba(255,255,255,0.08) 15%, transparent 20%, transparent 60%, rgba(255,255,255,0.08) 65%, transparent 70%); mix-blend-mode: screen; pointer-events: none;"></div>
+              <div class="album__cover">
+                <span class="album__tag">EP</span>
+                <div id="vinylDisc" class="vinyl-disc">
+                  <img
+                    class="vinyl-disc__art"
+                    src="assets/rondelle-niels-ep.png"
+                    alt="Pochette vinyle — À nos aînés"
+                    width="1080"
+                    height="1080"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
-                
               </div>
               <div class="album__meta">
                 <div class="album__title" style="display: flex; align-items: center; gap: 8px;">
@@ -234,6 +230,7 @@
           <div class="section__head">
             <h2 class="section__title">Boutique</h2>
             <p class="body body--muted" id="shopIntro" hidden></p>
+            <p class="body body--muted shop-catalog-note" id="shopCatalogNote" hidden></p>
           </div>
 
           <div
@@ -244,8 +241,8 @@
             aria-label="Produits"
           ></div>
 
-          <div class="center">
-            <a class="btn btn--primary" id="shopCta" href="#contact" aria-label="Accéder au shop">Le shop</a>
+          <div class="center" id="shopCtaWrap" hidden>
+            <a class="btn btn--primary" id="shopCta" href="boutique.html" aria-label="Voir toute la boutique">Toute la boutique</a>
           </div>
         </div>
 
@@ -345,7 +342,7 @@
                 <p class="body body--muted body--light">
                   Press kit, fiche technique, demandes de booking.
                 </p>
-                <a class="btn btn--ghost btn--ghostLight" href="#" aria-label="Accéder à l'espace pro">
+                <a class="btn btn--ghost btn--ghostLight" href="https://drive.google.com/drive/folders/1NCgmCDi8ok0nZp-2xnc07u1MSExjir5X?usp=sharing" target="_blank" rel="noopener noreferrer" aria-label="Accéder à l'espace pro (Google Drive)">
                   Accéder
                 </a>
               </div>
@@ -363,7 +360,7 @@
           </div>
           <p class="body body--muted body--small">
             Auteur, compositeur, interprète.<br>
-            Des chansons comme des confidences, à mi-voix…
+            Ses secrets se chantent sur scène.
           </p>
           <div class="socials">
             <a href="https://www.instagram.com/niels.officiel/" class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram">Insta</a>
@@ -384,7 +381,7 @@
         <div class="footer__col">
           <h4 class="footer__title">Liens pratiques</h4>
           <nav class="footer__nav">
-            <a href="#shop">Boutique</a>
+            <a href="#shop" data-shop-nav>Boutique</a>
             <a href="#pro">Espace professionnel</a>
             <a href="#contact">Contact & Newsletter</a>
           </nav>
@@ -396,12 +393,60 @@
           &copy; 2026 Niels. Tous droits réservés.
         </div>
         <div class="footer__links">
-          <a class="footer__link" href="#">Mentions légales</a>
-          <a class="footer__link" href="#">Confidentialité</a>
+          <a class="footer__link" href="mentions-legales.html">Mentions légales</a>
+          <a class="footer__link" href="confidentialite.html">Confidentialité</a>
           <a class="footer__link" href="#top">Haut de page &uarr;</a>
         </div>
       </div>
     </footer>
+
+    <div class="cookie-bar" id="cookieBar" role="dialog" aria-labelledby="cookieBarTitle" aria-describedby="cookieBarDesc" hidden>
+      <div class="cookie-bar__inner container">
+        <div class="cookie-bar__copy">
+          <p class="cookie-bar__title" id="cookieBarTitle">Cookies</p>
+          <p class="cookie-bar__text" id="cookieBarDesc">
+            Ce site utilise des cookies techniques pour assurer son bon fonctionnement.
+            Aucun cookie publicitaire n’est déposé pour le moment.
+          </p>
+        </div>
+        <button class="btn btn--primary cookie-bar__btn" type="button" id="cookieAcceptBtn">Accepter et continuer</button>
+      </div>
+    </div>
+
+    <div class="newsletter-popup" id="newsletterPopup" role="dialog" aria-modal="true" aria-labelledby="newsletterPopupTitle" hidden>
+      <div class="newsletter-popup__backdrop" data-newsletter-popup-close aria-hidden="true"></div>
+      <div class="newsletter-popup__panel" role="document">
+        <button class="newsletter-popup__close" type="button" id="newsletterPopupClose" aria-label="Fermer" data-newsletter-popup-close>&times;</button>
+        <h2 class="section__title section__title--light" id="newsletterPopupTitle">Soundletter</h2>
+        <p class="body body--muted body--light newsletter-popup__intro">
+          Une lettre rare&nbsp;: coulisses, dates, sorties. Zéro bruit, juste l’essentiel.
+        </p>
+        <form class="form form--dark" id="newsletterPopupForm" novalidate>
+          <label class="field">
+            <span class="field__label field__label--light">Email</span>
+            <input
+              class="field__input field__input--dark"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder="ton@email.com"
+              required
+            />
+          </label>
+          <label class="check">
+            <input class="check__box" type="checkbox" name="consent" />
+            <span class="check__text">
+              J’accepte de recevoir des emails de Niels (désinscription à tout moment).
+            </span>
+          </label>
+          <div class="newsletter-popup__actions">
+            <button class="btn btn--secondary" type="submit">S’inscrire</button>
+            <button class="btn btn--ghost btn--ghostLight" type="button" data-newsletter-popup-close>Plus tard</button>
+          </div>
+          <p class="fineprint fineprint--light" id="newsletterPopupHint" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
   </body>
 </html>
 

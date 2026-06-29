@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#D05033" />
+    <title>Boutique — Niels</title>
+    <meta name="description" content="Boutique officielle de Niels — merchandising, vinyles, affiches et éditions limitées." />
+    <link rel="canonical" href="https://niels-music.fr/boutique.html" />
+
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" />
+
+    <link rel="stylesheet" href="./dist/tailwind.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./main.js"></script>
+  </head>
+
+  <body data-shop-mode="catalog">
+    <a class="skip" href="#main">Aller au contenu</a>
+
+    <header class="header" id="top" data-elevate>
+      <nav class="nav" aria-label="Navigation principale">
+        <div class="nav__side nav__side--left">
+          <a class="nav__link" href="index.html#music">Musique</a>
+          <a class="nav__link" href="index.html#concerts">Concerts</a>
+        </div>
+
+        <a class="nav__brand" href="index.html" aria-label="Retour à l'accueil">
+          <img src="assets/logo-white.svg" alt="Niels" style="height: 26px; width: auto;" />
+        </a>
+
+        <div class="nav__side nav__side--right">
+          <a class="nav__link" href="index.html#pro">Espace pro</a>
+          <a class="nav__link nav__link--active" href="boutique.html" data-shop-nav aria-current="page">Boutique</a>
+          <a class="nav__link" href="index.html#contact">Contact</a>
+        </div>
+
+        <button class="nav__burger" aria-label="Ouvrir le menu" aria-expanded="false">
+          <span class="burger__bar"></span>
+          <span class="burger__bar"></span>
+          <span class="burger__bar"></span>
+        </button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="section section--boutique-page" id="shop" aria-label="Boutique">
+        <div class="container">
+          <div class="section__head section__head--boutique">
+            <div>
+              <p class="boutique-page__kicker">Shop</p>
+              <h1 class="section__title">Boutique</h1>
+              <p class="body body--muted" id="shopIntro" hidden></p>
+            </div>
+            <a class="btn btn--ghost" href="index.html">← Retour à l'accueil</a>
+          </div>
+
+          <div
+            class="products products--catalog reveal"
+            id="shopProducts"
+            aria-live="polite"
+            aria-busy="true"
+            aria-label="Catalogue produits"
+          ></div>
+
+          <div class="center" id="shopCtaWrap" hidden>
+            <a class="btn btn--primary" id="shopCta" href="#" aria-label="Accéder à la boutique">Toute la boutique</a>
+          </div>
+        </div>
+
+        <div
+          class="shop-modal"
+          id="shopModal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="shopModalTitle"
+          hidden
+        >
+          <div class="shop-modal__backdrop" data-shop-modal-close tabindex="-1"></div>
+          <div class="shop-modal__panel">
+            <button type="button" class="shop-modal__close" id="shopModalClose" aria-label="Fermer la fenêtre">
+              <span aria-hidden="true">×</span>
+            </button>
+            <div class="shop-modal__media" id="shopModalMedia"></div>
+            <div class="shop-modal__body">
+              <h3 class="h3" id="shopModalTitle"></h3>
+              <p class="body body--muted" id="shopModalDesc"></p>
+              <p class="body body--muted shop-modal__detail" id="shopModalDetail" hidden></p>
+              <p class="product__price shop-modal__price" id="shopModalPrice" hidden></p>
+              <a class="btn btn--primary shop-modal__cms" id="shopModalCms" href="#" hidden>Voir la fiche produit</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" aria-label="Pied de page">
+      <div class="container footer__bottom footer__bottom--solo">
+        <div class="footer__copyright">&copy; 2026 Niels. Tous droits réservés.</div>
+        <div class="footer__links">
+          <a class="footer__link" href="mentions-legales.html">Mentions légales</a>
+          <a class="footer__link" href="confidentialite.html">Confidentialité</a>
+          <a class="footer__link" href="index.html">Accueil</a>
+        </div>
+      </div>
+    </footer>
+
+    <div class="cookie-bar" id="cookieBar" role="dialog" aria-labelledby="cookieBarTitle" aria-describedby="cookieBarDesc" hidden>
+      <div class="cookie-bar__inner container">
+        <div class="cookie-bar__copy">
+          <p class="cookie-bar__title" id="cookieBarTitle">Cookies</p>
+          <p class="cookie-bar__text" id="cookieBarDesc">
+            Ce site utilise des cookies techniques pour assurer son bon fonctionnement.
+            Aucun cookie publicitaire n’est déposé pour le moment.
+          </p>
+        </div>
+        <button class="btn btn--primary cookie-bar__btn" type="button" id="cookieAcceptBtn">Accepter et continuer</button>
+      </div>
+    </div>
+  </body>
+</html>

@@ -35,6 +35,26 @@ function fitHeroTitleToSubtitle() {
 }
 
 /* ── Forms ── */
+function submitNewsletterForm(form, hintEl, { onSuccess } = {}) {
+  const data = new FormData(form);
+  const email = String(data.get("email") || "").trim();
+  const consent = Boolean(data.get("consent"));
+  if (!email) {
+    if (hintEl) hintEl.textContent = "Ajoute un email pour t'inscrire.";
+    return false;
+  }
+  if (!consent) {
+    if (hintEl) hintEl.textContent = "Merci de cocher le consentement.";
+    return false;
+  }
+  if (hintEl) {
+    hintEl.textContent =
+      "Inscription en mode maquette (aucun envoi). Connecte à Mailchimp/Brevo ensuite.";
+  }
+  if (onSuccess) onSuccess();
+  return true;
+}
+
 function wireForms() {
   const contactForm = $("#contactForm");
   const contactHint = $("#contactHint");
@@ -50,15 +70,151 @@ function wireForms() {
   if (newsletterForm && newsletterHint) {
     newsletterForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      const data = new FormData(newsletterForm);
-      const email = String(data.get("email") || "").trim();
-      const consent = Boolean(data.get("consent"));
-      if (!email) { newsletterHint.textContent = "Ajoute un email pour t'inscrire."; return; }
-      if (!consent) { newsletterHint.textContent = "Merci de cocher le consentement."; return; }
-      newsletterHint.textContent =
-        "Inscription en mode maquette (aucun envoi). Connecte à Mailchimp/Brevo ensuite.";
+      submitNewsletterForm(newsletterForm, newsletterHint);
     });
   }
+}
+
+const COOKIE_CONSENT_KEY = "niels_cookie_consent_v1";
+const NEWSLETTER_POPUP_KEY = "niels_newsletter_popup_v1";
+
+function readNewsletterPopupState() {
+  try {
+    const raw = localStorage.getItem(NEWSLETTER_POPUP_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeNewsletterPopupState(patch) {
+  const next = { ...readNewsletterPopupState(), ...patch, at: new Date().toISOString() };
+  try {
+    localStorage.setItem(NEWSLETTER_POPUP_KEY, JSON.stringify(next));
+  } catch {
+    /* stockage indisponible */
+  }
+}
+
+function wireCookieAndNewsletterPopup() {
+  const cookieBar = $("#cookieBar");
+  const cookieAcceptBtn = $("#cookieAcceptBtn");
+  const popup = $("#newsletterPopup");
+  const popupForm = $("#newsletterPopupForm");
+  const popupHint = $("#newsletterPopupHint");
+  const popupCloseBtn = $("#newsletterPopupClose");
+  if (!cookieBar && !popup) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const popupDelay = reduceMotion ? 0 : 700;
+  let popupTimer = 0;
+  let popupLastFocus = null;
+
+  const shouldShowPopup = () => {
+    const state = readNewsletterPopupState();
+    return !state.dismissed && !state.subscribed;
+  };
+
+  const hideCookieBar = () => {
+    if (!cookieBar) return;
+    cookieBar.classList.remove("is-visible");
+    window.setTimeout(() => {
+      cookieBar.hidden = true;
+    }, reduceMotion ? 0 : 320);
+  };
+
+  const openNewsletterPopup = () => {
+    if (!popup || !popup.hidden || !shouldShowPopup()) return;
+    popup.hidden = false;
+    document.body.classList.add("newsletter-popup-open");
+    popupLastFocus = document.activeElement;
+    const emailInput = popupForm && popupForm.querySelector('input[name="email"]');
+    if (emailInput && typeof emailInput.focus === "function") emailInput.focus();
+  };
+
+  const closeNewsletterPopup = (markDismissed = true) => {
+    if (!popup) return;
+    popup.hidden = true;
+    document.body.classList.remove("newsletter-popup-open");
+    if (markDismissed) writeNewsletterPopupState({ dismissed: true });
+    if (popupHint) popupHint.textContent = "";
+    if (popupForm) popupForm.reset();
+    if (popupLastFocus && typeof popupLastFocus.focus === "function") popupLastFocus.focus();
+    popupLastFocus = null;
+  };
+
+  const scheduleNewsletterPopup = () => {
+    if (!shouldShowPopup()) return;
+    if (popupTimer) window.clearTimeout(popupTimer);
+    popupTimer = window.setTimeout(() => {
+      popupTimer = 0;
+      openNewsletterPopup();
+    }, popupDelay);
+  };
+
+  const persistCookieConsent = () => {
+    try {
+      localStorage.setItem(
+        COOKIE_CONSENT_KEY,
+        JSON.stringify({ version: 1, choice: "essential", at: new Date().toISOString() })
+      );
+    } catch {
+      /* stockage indisponible */
+    }
+  };
+
+  const showCookieBar = () => {
+    if (!cookieBar) return;
+    cookieBar.hidden = false;
+    requestAnimationFrame(() => {
+      cookieBar.classList.add("is-visible");
+    });
+  };
+
+  const onCookieAccepted = () => {
+    persistCookieConsent();
+    hideCookieBar();
+    scheduleNewsletterPopup();
+  };
+
+  let hasCookieConsent = false;
+  try {
+    hasCookieConsent = Boolean(localStorage.getItem(COOKIE_CONSENT_KEY));
+  } catch {
+    hasCookieConsent = false;
+  }
+
+  if (hasCookieConsent) {
+    scheduleNewsletterPopup();
+  } else if (cookieBar) {
+    showCookieBar();
+  }
+
+  cookieAcceptBtn?.addEventListener("click", onCookieAccepted);
+
+  popupForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    submitNewsletterForm(popupForm, popupHint, {
+      onSuccess: () => {
+        writeNewsletterPopupState({ subscribed: true, dismissed: true });
+        window.setTimeout(() => closeNewsletterPopup(false), 1800);
+      },
+    });
+  });
+
+  popup?.addEventListener("click", (e) => {
+    const t = e.target;
+    if (t && t.closest && t.closest("[data-newsletter-popup-close]")) closeNewsletterPopup(true);
+  });
+
+  popupCloseBtn?.addEventListener("click", () => closeNewsletterPopup(true));
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !popup || popup.hidden) return;
+    closeNewsletterPopup(true);
+  });
 }
 
 /* ── Burger menu ── */
@@ -313,18 +469,117 @@ async function wireConcerts() {
 }
 
 async function loadShopData() {
-  try {
-    const raw = localStorage.getItem(SHOP_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object" && Array.isArray(parsed.products)) return parsed;
+  const preview = new URLSearchParams(window.location.search).has("preview");
+
+  if (preview) {
+    try {
+      const raw = localStorage.getItem(SHOP_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && Array.isArray(parsed.products)) return parsed;
+      }
+    } catch {
+      /* JSON public par défaut */
     }
-  } catch {
-    /* JSON par défaut */
   }
+
   const res = await fetch("./assets/shop.json", { cache: "no-store" });
   if (!res.ok) throw new Error(String(res.status));
   return res.json();
+}
+
+const SHOP_HOMEPAGE_LIMIT = 3;
+
+function getShopMode() {
+  if (document.body.dataset.shopMode === "catalog") return "catalog";
+  if (/\/boutique\.html$/i.test(location.pathname)) return "catalog";
+  return "home";
+}
+
+function getVisibleShopProducts(data) {
+  return (Array.isArray(data?.products) ? data.products : []).filter(
+    (p) => p && p.published !== false
+  );
+}
+
+function shopHasCatalogPage(data) {
+  return getVisibleShopProducts(data).length > SHOP_HOMEPAGE_LIMIT;
+}
+
+function updateShopNavLinks(hasCatalog) {
+  const href = hasCatalog ? "boutique.html" : "index.html#shop";
+  $$("[data-shop-nav]").forEach((el) => {
+    el.setAttribute("href", href);
+    el.removeAttribute("target");
+    el.removeAttribute("rel");
+  });
+}
+
+function buildProductCardHtml(p) {
+  const id = escapeAttr(String(p.id || ""));
+  const title = escapeHtml(p.title || "Produit");
+  const desc = escapeHtml(p.description || "");
+  const priceRaw = String(p.price || "").trim();
+  const priceHtml = priceRaw ? `<p class="product__price">${escapeHtml(priceRaw)}</p>` : "";
+  const imgPath = String(p.image || "").trim();
+  const imgAlt = escapeAttr(String(p.title || "Produit"));
+  const imgHtml = imgPath
+    ? `<img src="${escapeAttr(imgPath)}" alt="${imgAlt}" width="800" height="600" loading="lazy" decoding="async" />`
+    : "";
+  return `<article class="product">
+  <button type="button" class="product-card__open" data-product-id="${id}" aria-haspopup="dialog" aria-label="${escapeAttr(`Détails — ${p.title || "Produit"}`)}">
+    <div class="product__img">${imgHtml}</div>
+    <div class="product__info">
+      <h3 class="h3">${title}</h3>
+      <p class="body body--muted">${desc}</p>
+      ${priceHtml}
+    </div>
+  </button>
+</article>`;
+}
+
+function applyShopCta(cta, wrap, data, { hasCatalog, mode }) {
+  if (!cta) return;
+  const label = String(data?.shopCtaLabel || "Toute la boutique").trim() || "Toute la boutique";
+  const externalUrl = String(data?.shopUrl || "").trim();
+  cta.textContent = label;
+
+  const showWrap = (visible) => {
+    if (wrap) wrap.hidden = !visible;
+  };
+
+  if (mode === "catalog") {
+    if (/^https?:\/\//i.test(externalUrl)) {
+      showWrap(true);
+      cta.setAttribute("href", externalUrl);
+      cta.setAttribute("target", "_blank");
+      cta.setAttribute("rel", "noopener noreferrer");
+      cta.setAttribute("aria-label", `${label} (nouvel onglet)`);
+    } else {
+      showWrap(false);
+    }
+    return;
+  }
+
+  if (hasCatalog) {
+    showWrap(true);
+    cta.setAttribute("href", "boutique.html");
+    cta.removeAttribute("target");
+    cta.removeAttribute("rel");
+    cta.setAttribute("aria-label", label);
+    return;
+  }
+
+  if (/^https?:\/\//i.test(externalUrl)) {
+    showWrap(true);
+    cta.setAttribute("href", externalUrl);
+    cta.setAttribute("target", "_blank");
+    cta.setAttribute("rel", "noopener noreferrer");
+    cta.setAttribute("aria-label", `${label} (nouvel onglet)`);
+    return;
+  }
+
+  showWrap(false);
 }
 
 let shopProductsCache = [];
@@ -340,9 +595,20 @@ function isCmsProductUrl(s) {
 function renderShop(data) {
   const mount = $("#shopProducts");
   const cta = $("#shopCta");
+  const ctaWrap = $("#shopCtaWrap");
   const introEl = $("#shopIntro");
+  const catalogNote = $("#shopCatalogNote");
   if (!mount) return;
+
+  const mode = getShopMode();
+  const allVisible = getVisibleShopProducts(data);
+  const hasCatalog = shopHasCatalogPage(data);
+  const items = mode === "catalog" ? allVisible : allVisible.slice(0, SHOP_HOMEPAGE_LIMIT);
+
   mount.removeAttribute("aria-busy");
+  mount.classList.toggle("products--catalog", mode === "catalog");
+
+  updateShopNavLinks(hasCatalog);
 
   const intro = data && typeof data.intro === "string" ? data.intro.trim() : "";
   if (introEl) {
@@ -355,28 +621,22 @@ function renderShop(data) {
     }
   }
 
-  shopModalMeta.cmsCtaLabel =
-    String(data?.cmsCtaLabel || "Voir la fiche produit").trim() || "Voir la fiche produit";
-
-  const shopUrl = String(data?.shopUrl || "").trim();
-  if (cta) {
-    const label = String(data?.shopCtaLabel || "Le shop").trim() || "Le shop";
-    cta.textContent = label;
-    if (/^https?:\/\//i.test(shopUrl)) {
-      cta.setAttribute("href", shopUrl);
-      cta.setAttribute("target", "_blank");
-      cta.setAttribute("rel", "noopener noreferrer");
-      cta.setAttribute("aria-label", `${label} (nouvel onglet)`);
+  if (catalogNote) {
+    if (mode === "home" && hasCatalog) {
+      catalogNote.textContent = `Aperçu de ${SHOP_HOMEPAGE_LIMIT} produits — la boutique complète compte ${allVisible.length} articles.`;
+      catalogNote.removeAttribute("hidden");
     } else {
-      cta.setAttribute("href", "#contact");
-      cta.removeAttribute("target");
-      cta.removeAttribute("rel");
-      cta.setAttribute("aria-label", "Contacter pour la boutique");
+      catalogNote.textContent = "";
+      catalogNote.setAttribute("hidden", "");
     }
   }
 
-  const items = Array.isArray(data?.products) ? data.products : [];
-  shopProductsCache = items;
+  shopModalMeta.cmsCtaLabel =
+    String(data?.cmsCtaLabel || "Voir la fiche produit").trim() || "Voir la fiche produit";
+
+  applyShopCta(cta, ctaWrap, data, { hasCatalog, mode });
+
+  shopProductsCache = allVisible;
 
   if (!items.length) {
     mount.innerHTML =
@@ -384,32 +644,7 @@ function renderShop(data) {
     return;
   }
 
-  mount.innerHTML = items
-    .map((p) => {
-      const id = escapeAttr(String(p.id || ""));
-      const title = escapeHtml(p.title || "Produit");
-      const desc = escapeHtml(p.description || "");
-      const priceRaw = String(p.price || "").trim();
-      const priceHtml = priceRaw
-        ? `<p class="product__price">${escapeHtml(priceRaw)}</p>`
-        : "";
-      const imgPath = String(p.image || "").trim();
-      const imgAlt = escapeAttr(String(p.title || "Produit"));
-      const imgHtml = imgPath
-        ? `<img src="${escapeAttr(imgPath)}" alt="${imgAlt}" width="800" height="600" loading="lazy" decoding="async" />`
-        : "";
-      return `<article class="product">
-  <button type="button" class="product-card__open" data-product-id="${id}" aria-haspopup="dialog" aria-label="${escapeAttr(`Détails — ${p.title || "Produit"}`)}">
-    <div class="product__img">${imgHtml}</div>
-    <div class="product__info">
-      <h3 class="h3">${title}</h3>
-      <p class="body body--muted">${desc}</p>
-      ${priceHtml}
-    </div>
-  </button>
-</article>`;
-    })
-    .join("");
+  mount.innerHTML = items.map((p) => buildProductCardHtml(p)).join("");
 }
 
 function openShopModal(product) {
@@ -539,6 +774,11 @@ function wireShopProductButtons() {
 async function wireShop() {
   try {
     const data = await loadShopData();
+    if (getShopMode() === "catalog" && !shopHasCatalogPage(data)) {
+      const preview = new URLSearchParams(window.location.search).has("preview") ? "?preview=1" : "";
+      window.location.replace(`index.html${preview}#shop`);
+      return;
+    }
     renderShop(data);
     wireShopProductButtons();
     wireShopModals();
@@ -792,6 +1032,7 @@ function wireDiscographySpotifyPlaybackMessages() {
 window.addEventListener("load", () => {
   setHeaderElevation();
   wireForms();
+  wireCookieAndNewsletterPopup();
   wireBurger();
   wireActiveNav();
   wireReveal();

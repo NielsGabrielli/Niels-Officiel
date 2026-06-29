@@ -14,9 +14,11 @@
 - [ ] **Discographie** — Renseigner le titre, l'année et la cover art du/des EP/albums
 - [x] **Concerts** — Agenda géré via l’admin (`admin.html` → Section Concerts) : ajout/suppression de dates, export `concerts.json`, aperçu `?preview=1`, affichage public depuis `assets/concerts.json`
 - [ ] **Concerts (contenu)** — Renseigner les vraies dates, lieux et liens de billetterie dans l’admin puis déployer le `concerts.json` généré
-- [ ] **Boutique** — Brancher les cartes produits à un vrai shop (Shopify, Bigcartel…) ou supprimer la section si pas encore active
+- [x] **Boutique** — Section accueil (≤3 produits), page `boutique.html` (>3), admin complet (ordre, publication, aperçu)
+- [ ] **Boutique (contenu)** — Remplacer les visuels SVG par de vraies photos et connecter un vrai shop externe si besoin
 - [ ] **Espace pro** — Créer et lier un vrai press kit (PDF) et une fiche technique derrière le bouton "Accéder"
-- [ ] **Mentions légales** — Créer une page (ou modale) avec les mentions légales réelles
+- [x] **Mentions légales** — Page `mentions-legales.html` (éditeur, hébergeur, propriété intellectuelle)
+- [x] **Confidentialité** — Page `confidentialite.html` (RGPD, cookies, formulaires, newsletter)
 
 ### Formulaires non fonctionnels
 - [ ] **Formulaire Contact** — Brancher à un service d'envoi d'email (Formspree, EmailJS, Resend…)
@@ -50,7 +52,7 @@
 - [ ] Si plusieurs releases : envisager un carrousel ou des onglets pour naviguer entre elles
 
 ### Boutique
-- [ ] Les visuels produits `.product__img` sont des dégradés fictifs → remplacer par de vraies photos produits optimisées
+- [x] Les visuels produits sont gérés via l’admin (chemins images) — remplacer les SVG placeholder par de vraies photos optimisées
 
 ---
 
@@ -86,6 +88,6 @@
 - [ ] **Mode clair (optionnel)** — Prévoir un toggle light/dark mode si l'univers graphique le permet
 - [ ] **Sous-domaine ou page "Dans mon salon"** — Créer une landing page dédiée à ce format pour le booking de salons privés
 - [ ] **Analytics** — Intégrer un outil de mesure d'audience respectueux de la vie privée (Plausible, Umami ou Google Analytics avec consentement)
-- [ ] **Cookie banner** — Obligatoire si Analytics ou autres trackers tiers sont intégrés (RGPD)
+- [x] **Cookie banner** — Bannière cookies techniques + pop-up Soundletter après acceptation
 - [ ] **Accessibilité (a11y)** — Vérifier les contrastes (notamment le texte `.body--muted` en crème à 70% d'opacité sur fond noir), tester au clavier et avec un lecteur d'écran
 - [ ] **Smooth scroll** polyfill — Le `scroll-behavior: smooth` CSS n'est pas supporté sur certains anciens Safari mobiles ; envisager un polyfill JS léger

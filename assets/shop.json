@@ -1,7 +1,7 @@
 {
-  "version": 2,
+  "version": 3,
   "intro": "",
-  "shopUrl": "https://www.instagram.com/niels.officiel/",
+  "shopUrl": "",
   "shopCtaLabel": "Toute la boutique",
   "cmsCtaLabel": "Voir la fiche produit",
   "products": [
@@ -12,7 +12,8 @@
       "detail": "Coton bio, coupe confortable, logo sérigraphié couleur terracotta. Lavage 30° à l’envers.",
       "price": "32 €",
       "image": "assets/shop/product-tshirt.svg",
-      "cmsPageUrl": "/produit/t-shirt-niels"
+      "cmsPageUrl": "/produit/t-shirt-niels",
+      "published": true
     },
     {
       "id": "p2",
@@ -21,7 +22,8 @@
       "detail": "Disque ou CD selon disponibilité, jaquette carton, insert avec paroles.",
       "price": "À partir de 18 €",
       "image": "assets/shop/product-vinyl.svg",
-      "cmsPageUrl": "/produit/vinyle-cd"
+      "cmsPageUrl": "/produit/vinyle-cd",
+      "published": true
     },
     {
       "id": "p3",
@@ -30,7 +32,8 @@
       "detail": "Format A2, impression offset, papier crème texturé.",
       "price": "15 €",
       "image": "assets/shop/product-poster.svg",
-      "cmsPageUrl": "/produit/affiche-tournee"
+      "cmsPageUrl": "/produit/affiche-tournee",
+      "published": true
     }
   ]
 }
