@@ -7,7 +7,7 @@
   "main": "main.js",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": "26.x"
   },
   "scripts": {
     "dev": "concurrently -n css,web -c cyan,magenta \"npm run dev:css\" \"npm run dev:serve\"",
