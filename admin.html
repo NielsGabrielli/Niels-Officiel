@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Niels — Administration</title>
+  <link rel="canonical" href="https://niels-officiel.fr/admin" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" />
@@ -11,7 +12,61 @@
   <link rel="stylesheet" href="./styles.css" />
   <style>
     /* Admin specific styles */
-    body { background-color: #0d0d0d; color: #fff; font-family: 'Montserrat', sans-serif; display: flex; height: 100vh; overflow: hidden; margin: 0; }
+    body { background-color: #0d0d0d; color: #fff; font-family: 'Montserrat', sans-serif; height: 100vh; overflow: hidden; margin: 0; }
+    body.admin-ready { display: flex; }
+    .auth-gate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(208,80,51,.18) 0%, transparent 55%),
+        radial-gradient(circle at 50% 100%, rgba(20,20,20,1) 0%, rgba(8,8,8,1) 100%);
+    }
+    .auth-gate[hidden] { display: none !important; }
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(20,20,20,0.85);
+      border: 1px solid rgba(229,210,187,.12);
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.45);
+      backdrop-filter: blur(12px);
+    }
+    .auth-card__brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .auth-card h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      margin: 0 0 8px;
+      color: rgba(255,255,255,.92);
+    }
+    .auth-card__hint {
+      margin: 0 0 28px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(229,210,187,.55);
+    }
+    .auth-error {
+      display: none;
+      margin: 0 0 16px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(220,53,69,.15);
+      border: 1px solid rgba(220,53,69,.35);
+      color: #ff8a8a;
+      font-size: 13px;
+    }
+    .auth-error.is-visible { display: block; }
+    .auth-panel[hidden] { display: none !important; }
+    #adminApp[hidden] { display: none !important; }
+    #adminApp { display: contents; }
     .sidebar { width: 280px; background: rgba(20,20,20,0.95); border-right: 1px solid rgba(229,210,187,.10); display: flex; flex-direction: column; padding: 24px 0; }
     .sidebar__brand { padding: 0 24px 32px; display: flex; align-items: center; justify-content: space-between; }
     .nav-item { padding: 12px 24px; color: rgba(229,210,187,.6); text-decoration: none; font-weight: 500; font-size: 13px; letter-spacing: 0.05em; transition: all 0.2s ease; border-left: 2px solid transparent; display: flex; align-items: center; gap: 12px; }
@@ -108,6 +163,47 @@
 </head>
 <body>
 
+  <div id="adminAuthGate" class="auth-gate" aria-live="polite">
+    <div class="auth-card">
+      <div class="auth-card__brand">
+        <img src="assets/logo-white.svg" alt="Niels" style="height: 22px;" />
+        <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.2); padding: 2px 6px; border-radius: 4px;">Admin</span>
+      </div>
+
+      <div id="authLoginPanel" class="auth-panel">
+        <h1>Connexion</h1>
+        <p class="auth-card__hint">Identifiant et mot de passe, puis validation 2FA.</p>
+        <div id="authLoginError" class="auth-error" role="alert"></div>
+        <form id="authLoginForm" autocomplete="on">
+          <div class="form-group">
+            <label class="form-label" for="authUsername">Identifiant</label>
+            <input class="form-input" type="text" id="authUsername" name="username" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="authPassword">Mot de passe</label>
+            <input class="form-input" type="password" id="authPassword" name="password" autocomplete="current-password" required />
+          </div>
+          <button type="submit" class="btn-save" id="authLoginBtn" style="width:100%;">Continuer</button>
+        </form>
+      </div>
+
+      <div id="authTotpPanel" class="auth-panel" hidden>
+        <h1>Vérification 2FA</h1>
+        <p class="auth-card__hint">Entrez le code à 6 chiffres de votre application d’authentification.</p>
+        <div id="authTotpError" class="auth-error" role="alert"></div>
+        <form id="authTotpForm" autocomplete="one-time-code">
+          <div class="form-group">
+            <label class="form-label" for="authTotpCode">Code TOTP</label>
+            <input class="form-input" type="text" id="authTotpCode" name="totp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
+          </div>
+          <button type="submit" class="btn-save" id="authTotpBtn" style="width:100%;">Valider</button>
+          <button type="button" class="action-btn" id="authTotpBack" style="width:100%; margin-top:12px;">← Retour</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminApp" hidden>
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar__brand">
@@ -125,8 +221,9 @@
       <a href="#tab-contact" class="nav-item" data-target="tab-contact">Paramètres Contact</a>
     </nav>
     
-    <div style="margin-top: auto; padding: 24px;">
-      <a href="index.html" class="nav-item" style="border: 1px solid rgba(255,255,255,.1); border-radius: 8px; justify-content: center;">← Retour au site</a>
+    <div style="margin-top: auto; padding: 24px; display: flex; flex-direction: column; gap: 10px;">
+      <button type="button" class="nav-item" id="adminLogoutBtn" style="border: 1px solid rgba(220,53,69,.35); border-radius: 8px; justify-content: center; width: 100%; background: transparent; cursor: pointer; color: #ff8a8a;">Déconnexion</button>
+      <a href="/" class="nav-item" style="border: 1px solid rgba(255,255,255,.1); border-radius: 8px; justify-content: center;">← Retour au site</a>
     </div>
   </aside>
 
@@ -163,7 +260,7 @@
           · <span class="shop-status-pill" id="dashboardShopCatalogPill">Section accueil</span>
         </p>
         <p style="margin: 0 0 16px; font-size: 13px; color: rgba(255,255,255,.5); line-height: 1.5;">
-          Jusqu’à 3 produits&nbsp;: section sur l’accueil uniquement. Au-delà&nbsp;: page <code style="font-size:12px;">boutique.html</code> + bouton «&nbsp;Toute la boutique&nbsp;».
+          Jusqu’à 3 produits&nbsp;: section sur l’accueil uniquement. Au-delà&nbsp;: page <code style="font-size:12px;">/boutique</code> + bouton «&nbsp;Toute la boutique&nbsp;».
         </p>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
           <button type="button" class="action-btn" id="dashboardOpenShopTab">Gérer la boutique</button>
@@ -257,7 +354,7 @@
           Les données sont enregistrées dans ce navigateur et un fichier <code style="font-size: 12px;">shop.json</code> est proposé au téléchargement — à déposer dans <code style="font-size: 12px;">assets/shop.json</code> pour la mise en ligne.
           <br /><br />
           <strong style="color: rgba(229,210,187,.85);">≤ 3 produits publiés</strong>&nbsp;: uniquement la section boutique sur l’accueil.
-          <strong style="color: rgba(229,210,187,.85);">&gt; 3 produits</strong>&nbsp;: page <code style="font-size:12px;">boutique.html</code>, lien navbar et bouton «&nbsp;Toute la boutique&nbsp;».
+          <strong style="color: rgba(229,210,187,.85);">&gt; 3 produits</strong>&nbsp;: page <code style="font-size:12px;">/boutique</code>, lien navbar et bouton «&nbsp;Toute la boutique&nbsp;».
           Les 3 premiers produits (ordre ci-dessous) apparaissent sur l’accueil.
         </p>
         <p style="margin: 0 0 18px; font-size: 13px; color: rgba(255,255,255,.55);">
@@ -360,10 +457,149 @@
     <!-- Bio Tab Removed -->
 
   </main>
+  </div>
 
-  <!-- Simple script for switching tabs -->
+  <!-- Auth gate + admin dashboard -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    const AUTH_API = '/api/admin-auth';
+    let challengeToken = null;
+    let adminDashboardReady = false;
+
+    async function authRequest(payload) {
+      const res = await fetch(AUTH_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+      });
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+      return { res, data };
+    }
+
+    function showAuthError(el, message) {
+      if (!el) return;
+      el.textContent = message || 'Une erreur est survenue.';
+      el.classList.add('is-visible');
+    }
+
+    function clearAuthError(el) {
+      if (!el) return;
+      el.textContent = '';
+      el.classList.remove('is-visible');
+    }
+
+    function showLoginPanel() {
+      document.getElementById('authLoginPanel').hidden = false;
+      document.getElementById('authTotpPanel').hidden = true;
+      challengeToken = null;
+      clearAuthError(document.getElementById('authLoginError'));
+      clearAuthError(document.getElementById('authTotpError'));
+    }
+
+    function showTotpPanel() {
+      document.getElementById('authLoginPanel').hidden = true;
+      document.getElementById('authTotpPanel').hidden = false;
+      clearAuthError(document.getElementById('authTotpError'));
+      const code = document.getElementById('authTotpCode');
+      if (code) {
+        code.value = '';
+        code.focus();
+      }
+    }
+
+    function revealAdminApp() {
+      const gate = document.getElementById('adminAuthGate');
+      const app = document.getElementById('adminApp');
+      if (gate) gate.hidden = true;
+      if (app) app.hidden = false;
+      document.body.classList.add('admin-ready');
+      initAdminDashboard();
+    }
+
+    function wireAuthUi() {
+      const loginForm = document.getElementById('authLoginForm');
+      const totpForm = document.getElementById('authTotpForm');
+      const backBtn = document.getElementById('authTotpBack');
+      const logoutBtn = document.getElementById('adminLogoutBtn');
+
+      loginForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('authLoginError');
+        clearAuthError(err);
+        const btn = document.getElementById('authLoginBtn');
+        if (btn) btn.disabled = true;
+        try {
+          const username = document.getElementById('authUsername')?.value || '';
+          const password = document.getElementById('authPassword')?.value || '';
+          const { res, data } = await authRequest({ action: 'login', username, password });
+          if (!res.ok || !data.ok || !data.challengeToken) {
+            const msg = data.error === 'auth_not_configured'
+              ? 'Auth non configurée sur le serveur (variables Vercel manquantes).'
+              : 'Identifiant ou mot de passe incorrect.';
+            showAuthError(err, msg);
+            return;
+          }
+          challengeToken = data.challengeToken;
+          showTotpPanel();
+        } catch (_) {
+          showAuthError(err, 'Impossible de joindre le serveur d’authentification.');
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      });
+
+      totpForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('authTotpError');
+        clearAuthError(err);
+        const btn = document.getElementById('authTotpBtn');
+        if (btn) btn.disabled = true;
+        try {
+          const code = document.getElementById('authTotpCode')?.value || '';
+          const { res, data } = await authRequest({
+            action: 'verify2fa',
+            challengeToken,
+            code,
+          });
+          if (!res.ok || !data.ok) {
+            showAuthError(err, 'Code 2FA invalide ou expiré. Réessayez.');
+            return;
+          }
+          revealAdminApp();
+        } catch (_) {
+          showAuthError(err, 'Impossible de joindre le serveur d’authentification.');
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      });
+
+      backBtn?.addEventListener('click', showLoginPanel);
+
+      logoutBtn?.addEventListener('click', async () => {
+        try {
+          await authRequest({ action: 'logout' });
+        } catch (_) {}
+        window.location.reload();
+      });
+    }
+
+    async function bootstrapAdminAuth() {
+      wireAuthUi();
+      try {
+        const { data } = await authRequest({ action: 'session' });
+        if (data && data.authenticated) {
+          revealAdminApp();
+          return;
+        }
+      } catch (_) {}
+      showLoginPanel();
+      document.getElementById('authUsername')?.focus();
+    }
+
+    function initAdminDashboard() {
+      if (adminDashboardReady) return;
+      adminDashboardReady = true;
       const navItems = document.querySelectorAll('.nav-item[data-target]');
       const tabContents = document.querySelectorAll('.tab-content');
       const pageTitle = document.getElementById('pageTitle');
@@ -610,7 +846,7 @@
 
       function openShopPreview(target) {
         if (!saveShopAdminToStorage()) return;
-        const url = target === 'catalog' ? 'boutique.html?preview=1' : 'index.html?preview=1#shop';
+        const url = target === 'catalog' ? '/boutique?preview=1' : '/?preview=1#shop';
         window.open(url, '_blank', 'noopener');
       }
 
@@ -941,7 +1177,7 @@
           alert('Impossible de préparer l’aperçu (stockage navigateur indisponible).');
           return;
         }
-        window.open('index.html?preview=1#concerts', '_blank', 'noopener');
+        window.open('/?preview=1#concerts', '_blank', 'noopener');
       });
       document.getElementById('dashboardDeletePastConcerts')?.addEventListener('click', () => {
         removePastConcertRows();
@@ -955,7 +1191,9 @@
       loadShopAdmin();
 
       document.getElementById('shopProductsAdmin')?.addEventListener('input', updateDashboardShopStats);
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', bootstrapAdminAuth);
   </script>
 </body>
 </html>

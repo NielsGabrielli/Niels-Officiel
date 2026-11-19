@@ -172,7 +172,7 @@ function ensureCookieConsentUi() {
           <p class="cookie-banner__text" id="cookieBannerDesc">
             Nous utilisons des cookies nécessaires au fonctionnement du site, et — uniquement avec votre accord —
             des cookies de mesure d’audience et de marketing.
-            <a class="cookie-banner__link" href="confidentialite.html">Politique de confidentialité</a>
+            <a class="cookie-banner__link" href="/confidentialite">Politique de confidentialité</a>
           </p>
         </div>
         <div class="cookie-banner__actions">
@@ -699,7 +699,7 @@ function shopHasCatalogPage(data) {
 }
 
 function updateShopNavLinks(hasCatalog) {
-  const href = hasCatalog ? "boutique.html" : "index.html#shop";
+  const href = hasCatalog ? "/boutique" : "/#shop";
   $$("[data-shop-nav]").forEach((el) => {
     el.setAttribute("href", href);
     el.removeAttribute("target");
@@ -755,7 +755,7 @@ function applyShopCta(cta, wrap, data, { hasCatalog, mode }) {
 
   if (hasCatalog) {
     showWrap(true);
-    cta.setAttribute("href", "boutique.html");
+    cta.setAttribute("href", "/boutique");
     cta.removeAttribute("target");
     cta.removeAttribute("rel");
     cta.setAttribute("aria-label", label);
@@ -968,7 +968,7 @@ async function wireShop() {
     const data = await loadShopData();
     if (getShopMode() === "catalog" && !shopHasCatalogPage(data)) {
       const preview = new URLSearchParams(window.location.search).has("preview") ? "?preview=1" : "";
-      window.location.replace(`index.html${preview}#shop`);
+      window.location.replace(`/${preview}#shop`);
       return;
     }
     renderShop(data);
