@@ -44,7 +44,7 @@
 - [x] Animation d'entrée hero (titre + sous-titre + CTA décalés via keyframes CSS)
 
 ### Section "Salon" (galerie)
-- [ ] Les 4 tuiles `.tile` sont des placeholders vides → remplacer par de vraies photos (format `.webp` recommandé)
+- [x] Vidéos YouTube filtrées « Dans mon salon » via RSS + `assets/salon-videos.json` + workflow GitHub Actions quotidien
 - [ ] Ajouter une lightbox ou un lien vers une page dédiée au format "Dans mon salon"
 
 ### Discographie — Lecteur Spotify
@@ -69,14 +69,14 @@
 
 ### Performance
 - [x] Google Fonts via `<link>` avec `rel="preconnect"` ✓ (fait en même temps que le SEO)
-- [ ] Ajouter `loading="lazy"` dès que de vraies `<img>` sont intégrées
-- [ ] Optimiser les images en `.webp`
-- [ ] Ajouter `<meta name="theme-color">` adapté pour Android Chrome (déjà présent mais à vérifier la valeur)
+- [x] `loading="lazy"` sur images produits / discographie
+- [x] Images principales converties en `.webp` (hero, musique, DMS, EP)
+- [x] `<meta name="theme-color">` présent (`#D05033`)
 - [ ] Vérifier et corriger le score Lighthouse (Performance, Accessibilité, SEO, Bonnes pratiques)
 - [x] `robots.txt` créé
-- [ ] Le `package.json` n'a pas d'auteur ni de description → compléter
+- [x] `package.json` complété (auteur, description, engines) + `.nvmrc` (Node 20)
 - [x] `.gitignore` ajouté (exclure `node_modules`, `dist`, `.DS_Store`)
-- [ ] Ajouter `.nvmrc` ou `engines` dans `package.json`
+- [x] Stack npm mise à jour (Tailwind 3.4.19, PostCSS, Autoprefixer, audit 0 vuln.)
 - [x] **`required`** ajouté sur le champ email de la newsletter
 
 ---
@@ -88,6 +88,6 @@
 - [ ] **Mode clair (optionnel)** — Prévoir un toggle light/dark mode si l'univers graphique le permet
 - [ ] **Sous-domaine ou page "Dans mon salon"** — Créer une landing page dédiée à ce format pour le booking de salons privés
 - [ ] **Analytics** — Intégrer un outil de mesure d'audience respectueux de la vie privée (Plausible, Umami ou Google Analytics avec consentement)
-- [x] **Cookie banner** — Bannière cookies techniques + pop-up Soundletter après acceptation
+- [x] **Cookie CMP** — Bandeau RGPD (accepter / refuser / personnaliser), préférences v2, lien footer, API `NielsConsent`
 - [ ] **Accessibilité (a11y)** — Vérifier les contrastes (notamment le texte `.body--muted` en crème à 70% d'opacité sur fond noir), tester au clavier et avec un lecteur d'écran
 - [ ] **Smooth scroll** polyfill — Le `scroll-behavior: smooth` CSS n'est pas supporté sur certains anciens Safari mobiles ; envisager un polyfill JS léger

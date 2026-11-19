@@ -1,37 +1,31 @@
 {
   "channelId": "UC2kQJLBeSQ5dcpI1VsUkMAQ",
   "channelUrl": "https://www.youtube.com/@niels.officiel/videos",
-  "updatedAt": "2026-03-23T23:12:07.871Z",
+  "updatedAt": "2026-11-19T16:18:36.206Z",
   "videos": [
     {
-      "id": "o-jiopnfyR8",
-      "title": "Charles Aznavour - La Bohème (Niels Feat. Zooz)",
-      "thumbnail": "https://i4.ytimg.com/vi/o-jiopnfyR8/hqdefault.jpg",
-      "url": "https://www.youtube.com/watch?v=o-jiopnfyR8"
+      "id": "7HDT8woYCes",
+      "title": "Rudy B - Dans Mon Salon (Une seule vie  - De Palmas)",
+      "thumbnail": "https://i4.ytimg.com/vi/7HDT8woYCes/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=7HDT8woYCes"
     },
     {
-      "id": "e-b0vMBRK8A",
-      "title": "Manon Bonnes - Dans Mon Salon (Quand tu danses - Jean-Jacques Goldman)",
-      "thumbnail": "https://i2.ytimg.com/vi/e-b0vMBRK8A/hqdefault.jpg",
-      "url": "https://www.youtube.com/watch?v=e-b0vMBRK8A"
+      "id": "C5KPExDZNs0",
+      "title": "Lucil - Plage Paradis (Feat.Niels)",
+      "thumbnail": "https://i4.ytimg.com/vi/C5KPExDZNs0/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=C5KPExDZNs0"
     },
     {
-      "id": "jEhII8IcpL0",
-      "title": "Zooz & Clément - Dans Mon Salon (Aznavour - La Bohème)",
-      "thumbnail": "https://i3.ytimg.com/vi/jEhII8IcpL0/hqdefault.jpg",
-      "url": "https://www.youtube.com/watch?v=jEhII8IcpL0"
+      "id": "P1QtctWV9IU",
+      "title": "Solann - Perdu (Niels Feat. Lucil)",
+      "thumbnail": "https://i1.ytimg.com/vi/P1QtctWV9IU/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=P1QtctWV9IU"
     },
     {
-      "id": "HkW3kF31P6I",
-      "title": "Georges Brassens - Oncle Archibald (Niels Feat. Nicolas Majeune)",
-      "thumbnail": "https://i1.ytimg.com/vi/HkW3kF31P6I/hqdefault.jpg",
-      "url": "https://www.youtube.com/watch?v=HkW3kF31P6I"
-    },
-    {
-      "id": "NWCtapFu2T0",
-      "title": "Nicolas Majeune - Dans Mon Salon (Oncle Archibald - Georges Brassens)",
-      "thumbnail": "https://i3.ytimg.com/vi/NWCtapFu2T0/hqdefault.jpg",
-      "url": "https://www.youtube.com/watch?v=NWCtapFu2T0"
+      "id": "VRbbI4DGpB0",
+      "title": "Lucil - Dans Mon Salon (Perdu - Solann)",
+      "thumbnail": "https://i3.ytimg.com/vi/VRbbI4DGpB0/hqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=VRbbI4DGpB0"
     }
   ]
 }

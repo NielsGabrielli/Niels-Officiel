@@ -176,7 +176,7 @@
                 <div id="vinylDisc" class="vinyl-disc">
                   <img
                     class="vinyl-disc__art"
-                    src="assets/rondelle-niels-ep.png"
+                    src="assets/rondelle-niels-ep.webp"
                     alt="Pochette vinyle — À nos aînés"
                     width="1080"
                     height="1080"
@@ -395,56 +395,60 @@
         <div class="footer__links">
           <a class="footer__link" href="mentions-legales.html">Mentions légales</a>
           <a class="footer__link" href="confidentialite.html">Confidentialité</a>
+          <button type="button" class="footer__link footer__link--btn" data-cookie-open>Cookies</button>
           <a class="footer__link" href="#top">Haut de page &uarr;</a>
         </div>
       </div>
     </footer>
 
-    <div class="cookie-bar" id="cookieBar" role="dialog" aria-labelledby="cookieBarTitle" aria-describedby="cookieBarDesc" hidden>
-      <div class="cookie-bar__inner container">
-        <div class="cookie-bar__copy">
-          <p class="cookie-bar__title" id="cookieBarTitle">Cookies</p>
-          <p class="cookie-bar__text" id="cookieBarDesc">
-            Ce site utilise des cookies techniques pour assurer son bon fonctionnement.
-            Aucun cookie publicitaire n’est déposé pour le moment.
-          </p>
-        </div>
-        <button class="btn btn--primary cookie-bar__btn" type="button" id="cookieAcceptBtn">Accepter et continuer</button>
-      </div>
-    </div>
-
     <div class="newsletter-popup" id="newsletterPopup" role="dialog" aria-modal="true" aria-labelledby="newsletterPopupTitle" hidden>
       <div class="newsletter-popup__backdrop" data-newsletter-popup-close aria-hidden="true"></div>
       <div class="newsletter-popup__panel" role="document">
         <button class="newsletter-popup__close" type="button" id="newsletterPopupClose" aria-label="Fermer" data-newsletter-popup-close>&times;</button>
-        <h2 class="section__title section__title--light" id="newsletterPopupTitle">Soundletter</h2>
-        <p class="body body--muted body--light newsletter-popup__intro">
-          Une lettre rare&nbsp;: coulisses, dates, sorties. Zéro bruit, juste l’essentiel.
-        </p>
-        <form class="form form--dark" id="newsletterPopupForm" novalidate>
-          <label class="field">
-            <span class="field__label field__label--light">Email</span>
-            <input
-              class="field__input field__input--dark"
-              name="email"
-              type="email"
-              autocomplete="email"
-              placeholder="ton@email.com"
-              required
-            />
-          </label>
-          <label class="check">
-            <input class="check__box" type="checkbox" name="consent" />
-            <span class="check__text">
-              J’accepte de recevoir des emails de Niels (désinscription à tout moment).
-            </span>
-          </label>
-          <div class="newsletter-popup__actions">
-            <button class="btn btn--secondary" type="submit">S’inscrire</button>
-            <button class="btn btn--ghost btn--ghostLight" type="button" data-newsletter-popup-close>Plus tard</button>
-          </div>
-          <p class="fineprint fineprint--light" id="newsletterPopupHint" role="status" aria-live="polite"></p>
-        </form>
+        <div class="newsletter-popup__media" aria-hidden="true">
+          <img
+            src="assets/fond-section-2.webp"
+            alt=""
+            width="960"
+            height="540"
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="newsletter-popup__media-shade"></div>
+          <p class="newsletter-popup__media-caption">Coulisses &amp; confidences</p>
+        </div>
+        <div class="newsletter-popup__body">
+          <p class="newsletter-popup__kicker">Newsletter</p>
+          <h2 class="newsletter-popup__title" id="newsletterPopupTitle">Soundletter</h2>
+          <p class="body body--muted body--light newsletter-popup__intro">
+            Une lettre rare&nbsp;: coulisses, dates, sorties.<br />
+            Zéro bruit, juste l’essentiel.
+          </p>
+          <form class="form form--dark" id="newsletterPopupForm" novalidate>
+            <label class="field">
+              <span class="field__label field__label--light">Email</span>
+              <input
+                class="field__input field__input--dark"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="ton@email.com"
+                required
+              />
+            </label>
+            <label class="check">
+              <input class="check__box" type="checkbox" name="consent" />
+              <span class="check__text">
+                J’accepte de recevoir des emails de Niels (désinscription à tout moment).
+              </span>
+            </label>
+            <div class="newsletter-popup__actions">
+              <button class="btn btn--primary" type="submit">S’inscrire</button>
+              <button class="btn btn--ghost btn--ghostLight" type="button" data-newsletter-popup-close>Plus tard</button>
+            </div>
+            <p class="fineprint fineprint--light" id="newsletterPopupHint" role="status" aria-live="polite"></p>
+          </form>
+        </div>
       </div>
     </div>
   </body>

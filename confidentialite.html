@@ -101,9 +101,14 @@
                   <td>Consentement</td>
                 </tr>
                 <tr>
-                  <td>Cookies techniques</td>
-                  <td>Mémoriser vos préférences (cookies, pop-up newsletter)</td>
+                  <td>Cookies nécessaires</td>
+                  <td>Fonctionnement du site et mémorisation du consentement</td>
                   <td>Intérêt légitime</td>
+                </tr>
+                <tr>
+                  <td>Audience / marketing</td>
+                  <td>Mesure d’audience et éventuels trackers marketing</td>
+                  <td>Consentement</td>
                 </tr>
                 <tr>
                   <td>Logs hébergeur</td>
@@ -151,17 +156,30 @@
         <article class="legal-block">
           <h2>6. Cookies et stockage local</h2>
           <p>
-            Lors de votre première visite, une bannière vous informe de l'usage de cookies techniques.
-            Votre choix est enregistré localement. Un pop-up d'inscription à la Soundletter peut s'afficher
-            après acceptation&nbsp;; sa fermeture est également mémorisée dans votre navigateur.
+            Lors de votre première visite, un bandeau de consentement vous permet de&nbsp;:
           </p>
+          <ul>
+            <li><strong>Tout accepter</strong> — cookies nécessaires + audience + marketing&nbsp;;</li>
+            <li><strong>Tout refuser</strong> — cookies nécessaires uniquement&nbsp;;</li>
+            <li><strong>Personnaliser</strong> — choix catégorie par catégorie.</li>
+          </ul>
           <p>
-            Les clés utilisées&nbsp;: <code>niels_cookie_consent_v1</code>,
-            <code>niels_newsletter_popup_v1</code> (et éventuellement des clés liées à l'interface d'administration
-            sur <code>admin.html</code>, réservée à la gestion du contenu).
+            Catégories&nbsp;:
+          </p>
+          <ul>
+            <li><strong>Nécessaires</strong> (toujours actifs)&nbsp;: fonctionnement du site et mémorisation de votre choix.</li>
+            <li><strong>Mesure d’audience</strong> (optionnel)&nbsp;: statistiques d’usage, uniquement si vous les autorisez.</li>
+            <li><strong>Marketing</strong> (optionnel)&nbsp;: campagnes / contenus personnalisés, uniquement si vous les autorisez.</li>
+          </ul>
+          <p>
+            Votre choix est enregistré localement (<code>niels_cookie_consent_v2</code>). Vous pouvez le modifier à tout moment
+            via le lien <strong>Cookies</strong> en pied de page. Un pop-up Soundletter peut s’afficher après votre décision
+            (<code>niels_newsletter_popup_v1</code>).
           </p>
           <p class="fineprint body--muted">
-            Aucun cookie publicitaire ou de profilage n'est déposé par Niels à ce jour.
+            Tant qu’aucun outil d’analytics ou marketing n’est branché, aucun tracker tiers n’est chargé — même en cas d’acceptation.
+            Les scripts optionnels ne devront être injectés qu’après vérification de <code>NielsConsent.has('analytics')</code>
+            ou <code>NielsConsent.has('marketing')</code>.
           </p>
         </article>
 
@@ -221,22 +239,10 @@
         <div class="footer__links">
           <a class="footer__link" href="mentions-legales.html">Mentions légales</a>
           <a class="footer__link" href="confidentialite.html" aria-current="page">Confidentialité</a>
+          <button type="button" class="footer__link footer__link--btn" data-cookie-open>Cookies</button>
           <a class="footer__link" href="index.html">Accueil</a>
         </div>
       </div>
     </footer>
-
-    <div class="cookie-bar" id="cookieBar" role="dialog" aria-labelledby="cookieBarTitle" aria-describedby="cookieBarDesc" hidden>
-      <div class="cookie-bar__inner container">
-        <div class="cookie-bar__copy">
-          <p class="cookie-bar__title" id="cookieBarTitle">Cookies</p>
-          <p class="cookie-bar__text" id="cookieBarDesc">
-            Ce site utilise des cookies techniques pour assurer son bon fonctionnement.
-            Aucun cookie publicitaire n’est déposé pour le moment.
-          </p>
-        </div>
-        <button class="btn btn--primary cookie-bar__btn" type="button" id="cookieAcceptBtn">Accepter et continuer</button>
-      </div>
-    </div>
   </body>
 </html>

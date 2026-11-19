@@ -75,8 +75,68 @@ function wireForms() {
   }
 }
 
-const COOKIE_CONSENT_KEY = "niels_cookie_consent_v1";
+const COOKIE_CONSENT_KEY = "niels_cookie_consent_v2";
+const COOKIE_CONSENT_LEGACY_KEY = "niels_cookie_consent_v1";
 const NEWSLETTER_POPUP_KEY = "niels_newsletter_popup_v1";
+
+function defaultCookieConsent() {
+  return {
+    version: 2,
+    necessary: true,
+    analytics: false,
+    marketing: false,
+    decided: false,
+    at: null,
+  };
+}
+
+function readCookieConsent() {
+  try {
+    const raw = localStorage.getItem(COOKIE_CONSENT_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && parsed.version === 2) {
+        return {
+          ...defaultCookieConsent(),
+          ...parsed,
+          necessary: true,
+          decided: Boolean(parsed.decided),
+        };
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return defaultCookieConsent();
+}
+
+function writeCookieConsent(partial) {
+  const next = {
+    ...defaultCookieConsent(),
+    ...readCookieConsent(),
+    ...partial,
+    necessary: true,
+    version: 2,
+    at: new Date().toISOString(),
+  };
+  try {
+    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(next));
+    localStorage.removeItem(COOKIE_CONSENT_LEGACY_KEY);
+  } catch {
+    /* stockage indisponible */
+  }
+  window.NielsConsent = {
+    ...(window.NielsConsent || {}),
+    get: () => readCookieConsent(),
+    has: (category) => {
+      const c = readCookieConsent();
+      if (category === "necessary") return true;
+      return Boolean(c.decided && c[category]);
+    },
+  };
+  window.dispatchEvent(new CustomEvent("niels:consent", { detail: next }));
+  return next;
+}
 
 function readNewsletterPopupState() {
   try {
@@ -98,31 +158,118 @@ function writeNewsletterPopupState(patch) {
   }
 }
 
+function ensureCookieConsentUi() {
+  let root = $("#cookieConsentRoot");
+  if (root) return root;
+
+  root = document.createElement("div");
+  root.id = "cookieConsentRoot";
+  root.innerHTML = `
+    <div class="cookie-banner" id="cookieBanner" role="dialog" aria-modal="true" aria-labelledby="cookieBannerTitle" aria-describedby="cookieBannerDesc" hidden>
+      <div class="cookie-banner__inner container">
+        <div class="cookie-banner__copy">
+          <p class="cookie-banner__title" id="cookieBannerTitle">Votre vie privée</p>
+          <p class="cookie-banner__text" id="cookieBannerDesc">
+            Nous utilisons des cookies nécessaires au fonctionnement du site, et — uniquement avec votre accord —
+            des cookies de mesure d’audience et de marketing.
+            <a class="cookie-banner__link" href="confidentialite.html">Politique de confidentialité</a>
+          </p>
+        </div>
+        <div class="cookie-banner__actions">
+          <button type="button" class="btn btn--ghost btn--ghostLight" id="cookieRejectBtn">Tout refuser</button>
+          <button type="button" class="btn btn--secondary" id="cookieCustomizeBtn">Personnaliser</button>
+          <button type="button" class="btn btn--primary" id="cookieAcceptBtn">Tout accepter</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cookie-prefs" id="cookiePrefs" role="dialog" aria-modal="true" aria-labelledby="cookiePrefsTitle" hidden>
+      <div class="cookie-prefs__backdrop" data-cookie-prefs-close aria-hidden="true"></div>
+      <div class="cookie-prefs__panel" role="document">
+        <button type="button" class="cookie-prefs__close" id="cookiePrefsClose" aria-label="Fermer" data-cookie-prefs-close>&times;</button>
+        <h2 class="cookie-prefs__title" id="cookiePrefsTitle">Préférences cookies</h2>
+        <p class="cookie-prefs__intro">
+          Choisissez les catégories autorisées. Les cookies nécessaires restent toujours actifs.
+        </p>
+
+        <div class="cookie-cat">
+          <div class="cookie-cat__head">
+            <div>
+              <p class="cookie-cat__name">Nécessaires</p>
+              <p class="cookie-cat__desc">Indispensables au fonctionnement (sécurité, préférences de consentement).</p>
+            </div>
+            <label class="cookie-switch">
+              <input type="checkbox" checked disabled aria-label="Cookies nécessaires (toujours actifs)" />
+              <span class="cookie-switch__ui" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="cookie-cat">
+          <div class="cookie-cat__head">
+            <div>
+              <p class="cookie-cat__name">Mesure d’audience</p>
+              <p class="cookie-cat__desc">Statistiques anonymisées pour comprendre l’usage du site (ex. Plausible, Umami).</p>
+            </div>
+            <label class="cookie-switch">
+              <input type="checkbox" id="cookieAnalyticsToggle" aria-label="Autoriser les cookies d’audience" />
+              <span class="cookie-switch__ui" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="cookie-cat">
+          <div class="cookie-cat__head">
+            <div>
+              <p class="cookie-cat__name">Marketing</p>
+              <p class="cookie-cat__desc">Contenus et campagnes personnalisés (désactivé tant qu’aucun outil n’est branché).</p>
+            </div>
+            <label class="cookie-switch">
+              <input type="checkbox" id="cookieMarketingToggle" aria-label="Autoriser les cookies marketing" />
+              <span class="cookie-switch__ui" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="cookie-prefs__actions">
+          <button type="button" class="btn btn--ghost btn--ghostLight" id="cookiePrefsRejectBtn">Tout refuser</button>
+          <button type="button" class="btn btn--primary" id="cookiePrefsSaveBtn">Enregistrer mon choix</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(root);
+  return root;
+}
+
 function wireCookieAndNewsletterPopup() {
-  const cookieBar = $("#cookieBar");
-  const cookieAcceptBtn = $("#cookieAcceptBtn");
+  ensureCookieConsentUi();
+
+  const banner = $("#cookieBanner");
+  const prefs = $("#cookiePrefs");
+  const acceptBtn = $("#cookieAcceptBtn");
+  const rejectBtn = $("#cookieRejectBtn");
+  const customizeBtn = $("#cookieCustomizeBtn");
+  const prefsCloseBtn = $("#cookiePrefsClose");
+  const prefsSaveBtn = $("#cookiePrefsSaveBtn");
+  const prefsRejectBtn = $("#cookiePrefsRejectBtn");
+  const analyticsToggle = $("#cookieAnalyticsToggle");
+  const marketingToggle = $("#cookieMarketingToggle");
+
   const popup = $("#newsletterPopup");
   const popupForm = $("#newsletterPopupForm");
   const popupHint = $("#newsletterPopupHint");
   const popupCloseBtn = $("#newsletterPopupClose");
-  if (!cookieBar && !popup) return;
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const popupDelay = reduceMotion ? 0 : 700;
   let popupTimer = 0;
   let popupLastFocus = null;
+  let prefsLastFocus = null;
 
   const shouldShowPopup = () => {
     const state = readNewsletterPopupState();
     return !state.dismissed && !state.subscribed;
-  };
-
-  const hideCookieBar = () => {
-    if (!cookieBar) return;
-    cookieBar.classList.remove("is-visible");
-    window.setTimeout(() => {
-      cookieBar.hidden = true;
-    }, reduceMotion ? 0 : 320);
   };
 
   const openNewsletterPopup = () => {
@@ -154,45 +301,88 @@ function wireCookieAndNewsletterPopup() {
     }, popupDelay);
   };
 
-  const persistCookieConsent = () => {
-    try {
-      localStorage.setItem(
-        COOKIE_CONSENT_KEY,
-        JSON.stringify({ version: 1, choice: "essential", at: new Date().toISOString() })
-      );
-    } catch {
-      /* stockage indisponible */
-    }
+  const showBanner = () => {
+    if (!banner) return;
+    banner.hidden = false;
+    document.body.classList.add("cookie-banner-open");
+    requestAnimationFrame(() => banner.classList.add("is-visible"));
   };
 
-  const showCookieBar = () => {
-    if (!cookieBar) return;
-    cookieBar.hidden = false;
-    requestAnimationFrame(() => {
-      cookieBar.classList.add("is-visible");
+  const hideBanner = () => {
+    if (!banner) return;
+    banner.classList.remove("is-visible");
+    document.body.classList.remove("cookie-banner-open");
+    window.setTimeout(() => {
+      banner.hidden = true;
+    }, reduceMotion ? 0 : 320);
+  };
+
+  const syncPrefsToggles = (consent) => {
+    if (analyticsToggle) analyticsToggle.checked = Boolean(consent.analytics);
+    if (marketingToggle) marketingToggle.checked = Boolean(consent.marketing);
+  };
+
+  const openPrefs = () => {
+    if (!prefs) return;
+    syncPrefsToggles(readCookieConsent());
+    prefs.hidden = false;
+    document.body.classList.add("cookie-prefs-open");
+    prefsLastFocus = document.activeElement;
+    prefsSaveBtn?.focus();
+  };
+
+  const closePrefs = () => {
+    if (!prefs || prefs.hidden) return;
+    prefs.hidden = true;
+    document.body.classList.remove("cookie-prefs-open");
+    if (prefsLastFocus && typeof prefsLastFocus.focus === "function") prefsLastFocus.focus();
+    prefsLastFocus = null;
+  };
+
+  const settleConsent = (partial) => {
+    writeCookieConsent({ ...partial, decided: true });
+    hideBanner();
+    closePrefs();
+    scheduleNewsletterPopup();
+  };
+
+  // API publique pour futurs scripts analytics / marketing
+  writeCookieConsent(readCookieConsent());
+
+  const consent = readCookieConsent();
+  if (consent.decided) {
+    scheduleNewsletterPopup();
+  } else {
+    showBanner();
+  }
+
+  acceptBtn?.addEventListener("click", () => {
+    settleConsent({ analytics: true, marketing: true });
+  });
+  rejectBtn?.addEventListener("click", () => {
+    settleConsent({ analytics: false, marketing: false });
+  });
+  customizeBtn?.addEventListener("click", () => openPrefs());
+  prefsCloseBtn?.addEventListener("click", () => closePrefs());
+  prefs?.addEventListener("click", (e) => {
+    if (e.target?.closest?.("[data-cookie-prefs-close]")) closePrefs();
+  });
+  prefsSaveBtn?.addEventListener("click", () => {
+    settleConsent({
+      analytics: Boolean(analyticsToggle?.checked),
+      marketing: Boolean(marketingToggle?.checked),
     });
-  };
+  });
+  prefsRejectBtn?.addEventListener("click", () => {
+    settleConsent({ analytics: false, marketing: false });
+  });
 
-  const onCookieAccepted = () => {
-    persistCookieConsent();
-    hideCookieBar();
-    scheduleNewsletterPopup();
-  };
-
-  let hasCookieConsent = false;
-  try {
-    hasCookieConsent = Boolean(localStorage.getItem(COOKIE_CONSENT_KEY));
-  } catch {
-    hasCookieConsent = false;
-  }
-
-  if (hasCookieConsent) {
-    scheduleNewsletterPopup();
-  } else if (cookieBar) {
-    showCookieBar();
-  }
-
-  cookieAcceptBtn?.addEventListener("click", onCookieAccepted);
+  $$("[data-cookie-open]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      openPrefs();
+    });
+  });
 
   popupForm?.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -205,15 +395,17 @@ function wireCookieAndNewsletterPopup() {
   });
 
   popup?.addEventListener("click", (e) => {
-    const t = e.target;
-    if (t && t.closest && t.closest("[data-newsletter-popup-close]")) closeNewsletterPopup(true);
+    if (e.target?.closest?.("[data-newsletter-popup-close]")) closeNewsletterPopup(true);
   });
-
   popupCloseBtn?.addEventListener("click", () => closeNewsletterPopup(true));
 
   document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape" || !popup || popup.hidden) return;
-    closeNewsletterPopup(true);
+    if (e.key !== "Escape") return;
+    if (prefs && !prefs.hidden) {
+      closePrefs();
+      return;
+    }
+    if (popup && !popup.hidden) closeNewsletterPopup(true);
   });
 }
 
@@ -849,12 +1041,18 @@ async function salonFetchText(url, timeoutMs = 16000) {
   }
 }
 
-/** YouTube ne sert pas le RSS avec CORS ; on passe par des proxys publics. */
-async function salonFetchRssXml(timeoutMs = 7000) {
+/**
+ * YouTube ne sert pas le RSS avec CORS.
+ * Tentative best-effort via proxys publics (souvent instables) ;
+ * la source fiable reste assets/salon-videos.json (rafraîchi par `npm run fetch:salon`
+ * et le workflow GitHub Actions refresh-salon-videos).
+ */
+async function salonFetchRssXml(timeoutMs = 5000) {
   const rss = SALON_RSS_URL;
   const proxyUrls = [
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(rss)}`,
     `https://corsproxy.io/?${encodeURIComponent(rss)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(rss)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rss)}`,
   ];
   let lastErr;
   for (const p of proxyUrls) {

@@ -1,7 +1,14 @@
 {
   "name": "niels",
   "version": "1.0.0",
+  "description": "Site officiel de Niels — auteur, compositeur, interprète.",
+  "author": "Niels <contact@niels-officiel.fr>",
+  "license": "ISC",
   "main": "main.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently -n css,web -c cyan,magenta \"npm run dev:css\" \"npm run dev:serve\"",
     "dev:css": "tailwindcss -i ./tailwind.css -o ./dist/tailwind.css --watch",
@@ -9,15 +16,16 @@
     "fetch:salon": "node scripts/fetch-salon-videos.mjs",
     "build": "tailwindcss -i ./tailwind.css -o ./dist/tailwind.css --minify"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "niels",
+    "music",
+    "artist"
+  ],
   "devDependencies": {
-    "autoprefixer": "^10.4.27",
-    "concurrently": "^9.2.1",
+    "autoprefixer": "^10.6.2",
+    "concurrently": "^9.2.5",
     "http-server": "^14.1.1",
-    "postcss": "^8.5.8",
-    "tailwindcss": "^3.4.17"
+    "postcss": "^8.5.33",
+    "tailwindcss": "^3.4.19"
   }
 }
