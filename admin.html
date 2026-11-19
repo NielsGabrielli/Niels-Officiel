@@ -67,6 +67,24 @@
     .auth-panel[hidden] { display: none !important; }
     #adminApp[hidden] { display: none !important; }
     #adminApp { display: contents; }
+    .password-field { position: relative; }
+    .password-field .form-input { padding-right: 72px; }
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: rgba(229,210,187,.7);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 6px 8px;
+    }
+    .password-toggle:hover { color: #fff; }
     .sidebar { width: 280px; background: rgba(20,20,20,0.95); border-right: 1px solid rgba(229,210,187,.10); display: flex; flex-direction: column; padding: 24px 0; }
     .sidebar__brand { padding: 0 24px 32px; display: flex; align-items: center; justify-content: space-between; }
     .nav-item { padding: 12px 24px; color: rgba(229,210,187,.6); text-decoration: none; font-weight: 500; font-size: 13px; letter-spacing: 0.05em; transition: all 0.2s ease; border-left: 2px solid transparent; display: flex; align-items: center; gap: 12px; }
@@ -181,7 +199,10 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="authPassword">Mot de passe</label>
-            <input class="form-input" type="password" id="authPassword" name="password" autocomplete="current-password" required />
+            <div class="password-field">
+              <input class="form-input" type="password" id="authPassword" name="password" autocomplete="current-password" required />
+              <button type="button" class="password-toggle" id="authPasswordToggle" aria-pressed="false" aria-label="Afficher le mot de passe">Voir</button>
+            </div>
           </div>
           <button type="submit" class="btn-save" id="authLoginBtn" style="width:100%;">Continuer</button>
         </form>
@@ -522,6 +543,17 @@
       const totpForm = document.getElementById('authTotpForm');
       const backBtn = document.getElementById('authTotpBack');
       const logoutBtn = document.getElementById('adminLogoutBtn');
+      const passwordInput = document.getElementById('authPassword');
+      const passwordToggle = document.getElementById('authPasswordToggle');
+
+      passwordToggle?.addEventListener('click', () => {
+        if (!passwordInput) return;
+        const show = passwordInput.type === 'password';
+        passwordInput.type = show ? 'text' : 'password';
+        passwordToggle.textContent = show ? 'Masquer' : 'Voir';
+        passwordToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+        passwordToggle.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+      });
 
       loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
