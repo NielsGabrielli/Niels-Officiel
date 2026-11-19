@@ -486,6 +486,11 @@
     let challengeToken = null;
     let adminDashboardReady = false;
 
+    // Forcer www pour que le cookie de session et l’API restent sur le même host.
+    if (location.hostname === 'niels-officiel.fr') {
+      location.replace('https://www.niels-officiel.fr' + location.pathname + location.search + location.hash);
+    }
+
     async function authRequest(payload) {
       const res = await fetch(AUTH_API, {
         method: 'POST',
@@ -562,13 +567,16 @@
         const btn = document.getElementById('authLoginBtn');
         if (btn) btn.disabled = true;
         try {
-          const username = document.getElementById('authUsername')?.value || '';
+          const username = (document.getElementById('authUsername')?.value || '').trim();
           const password = document.getElementById('authPassword')?.value || '';
           const { res, data } = await authRequest({ action: 'login', username, password });
           if (!res.ok || !data.ok || !data.challengeToken) {
-            const msg = data.error === 'auth_not_configured'
-              ? 'Auth non configurée sur le serveur (variables Vercel manquantes).'
-              : 'Identifiant ou mot de passe incorrect.';
+            let msg = 'Identifiant ou mot de passe incorrect.';
+            if (data.error === 'auth_not_configured') {
+              msg = 'Auth non configurée sur le serveur (variables Vercel manquantes).';
+            } else if (!res.ok && res.status >= 500) {
+              msg = 'Erreur serveur. Réessayez dans un instant.';
+            }
             showAuthError(err, msg);
             return;
           }
