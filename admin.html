@@ -85,6 +85,55 @@
       padding: 6px 8px;
     }
     .password-toggle:hover { color: #fff; }
+    .venue-autocomplete {
+      position: relative;
+      min-width: 220px;
+    }
+    .venue-autocomplete__list {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 40;
+      margin: 0;
+      padding: 6px 0;
+      list-style: none;
+      background: #161616;
+      border: 1px solid rgba(229,210,187,.18);
+      border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.45);
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .venue-autocomplete__list[hidden] { display: none !important; }
+    .venue-autocomplete__item {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,.9);
+      padding: 10px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .venue-autocomplete__item:hover,
+    .venue-autocomplete__item.is-active {
+      background: rgba(208,80,51,.18);
+      color: #fff;
+    }
+    .venue-autocomplete__item small {
+      display: block;
+      margin-top: 2px;
+      color: rgba(229,210,187,.55);
+      font-size: 11px;
+    }
+    .venue-autocomplete__empty {
+      padding: 10px 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,.45);
+    }
     .auth-totp-setup {
       margin: 0 0 22px;
       padding: 16px;
@@ -387,7 +436,7 @@
             <tr>
               <th style="min-width: 160px;">Date (calendrier)</th>
               <th style="min-width: 110px;">Horaire</th>
-              <th>Lieu</th>
+              <th style="min-width: 240px;">Lieu (recherche Maps)</th>
               <th>Type</th>
               <th>Lien réservation</th>
               <th style="width: 100px;">Actions</th>
@@ -1269,12 +1318,149 @@
         tr.innerHTML = `
           <td><input type="date" class="form-input" data-field="dateIso" value="${escapeHtmlAttr(iso)}" /></td>
           <td><input type="time" class="form-input" data-field="time" value="${escapeHtmlAttr(time)}" step="300" title="Heure du spectacle" /></td>
-          <td><input type="text" class="form-input" data-field="venue" value="${escapeHtmlAttr(row.venue || '')}" placeholder="Ville — lieu" /></td>
+          <td>
+            <div class="venue-autocomplete">
+              <input type="text" class="form-input" data-field="venue" value="${escapeHtmlAttr(row.venue || '')}" placeholder="Rechercher un lieu ou une adresse…" autocomplete="off" />
+              <ul class="venue-autocomplete__list" hidden role="listbox"></ul>
+            </div>
+          </td>
           <td><input type="text" class="form-input" data-field="type" value="${escapeHtmlAttr(row.type || '')}" placeholder="Concert" /></td>
           <td><input type="url" class="form-input" data-field="bookingUrl" value="${escapeHtmlAttr(row.bookingUrl || '')}" placeholder="https://…" /></td>
           <td><button type="button" class="action-btn delete" data-action="delete">Supprimer</button></td>
         `;
         return tr;
+      }
+
+      function formatPhotonLabel(props) {
+        const name = props.name || props.street || '';
+        const city = props.city || props.town || props.village || props.municipality || props.county || '';
+        const state = props.state || '';
+        const country = props.country || '';
+        const secondary = [props.street && props.name ? props.street : '', city, state, country]
+          .filter(Boolean)
+          .filter((v, i, arr) => arr.indexOf(v) === i)
+          .join(', ');
+        const primary = name || city || 'Lieu';
+        const venueValue = city && name && name !== city ? `${name} — ${city}` : (name || secondary || primary);
+        return { primary, secondary, venueValue };
+      }
+
+      async function searchVenuePlaces(query) {
+        const q = String(query || '').trim();
+        if (q.length < 3) return [];
+        const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lang=fr&limit=6`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(String(res.status));
+        const data = await res.json();
+        const features = Array.isArray(data?.features) ? data.features : [];
+        return features.map((f) => {
+          const props = f.properties || {};
+          const label = formatPhotonLabel(props);
+          return {
+            primary: label.primary,
+            secondary: label.secondary,
+            venueValue: label.venueValue,
+          };
+        });
+      }
+
+      function closeVenueSuggestions(exceptList) {
+        document.querySelectorAll('.venue-autocomplete__list').forEach((list) => {
+          if (exceptList && list === exceptList) return;
+          list.hidden = true;
+          list.innerHTML = '';
+        });
+      }
+
+      function wireVenueAutocomplete(tbodyEl) {
+        if (!tbodyEl || tbodyEl.dataset.venueAutoWired) return;
+        tbodyEl.dataset.venueAutoWired = '1';
+        let debounceTimer = null;
+        let activeIndex = -1;
+        let latestQuery = '';
+
+        tbodyEl.addEventListener('input', (e) => {
+          const input = e.target.closest('[data-field="venue"]');
+          if (!input) return;
+          const wrap = input.closest('.venue-autocomplete');
+          const list = wrap?.querySelector('.venue-autocomplete__list');
+          if (!list) return;
+          const query = input.value.trim();
+          latestQuery = query;
+          activeIndex = -1;
+          clearTimeout(debounceTimer);
+          if (query.length < 3) {
+            closeVenueSuggestions();
+            return;
+          }
+          debounceTimer = setTimeout(async () => {
+            try {
+              list.innerHTML = '<li class="venue-autocomplete__empty">Recherche…</li>';
+              list.hidden = false;
+              const results = await searchVenuePlaces(query);
+              if (latestQuery !== query) return;
+              if (!results.length) {
+                list.innerHTML = '<li class="venue-autocomplete__empty">Aucun lieu trouvé</li>';
+                return;
+              }
+              list.innerHTML = results.map((r, i) => `
+                <li>
+                  <button type="button" class="venue-autocomplete__item" data-index="${i}" data-venue="${escapeHtmlAttr(r.venueValue)}" role="option">
+                    ${escapeHtmlText(r.primary)}
+                    ${r.secondary ? `<small>${escapeHtmlText(r.secondary)}</small>` : ''}
+                  </button>
+                </li>
+              `).join('');
+            } catch (_) {
+              if (latestQuery !== query) return;
+              list.innerHTML = '<li class="venue-autocomplete__empty">Recherche indisponible</li>';
+              list.hidden = false;
+            }
+          }, 280);
+        });
+
+        tbodyEl.addEventListener('keydown', (e) => {
+          const input = e.target.closest('[data-field="venue"]');
+          if (!input) return;
+          const wrap = input.closest('.venue-autocomplete');
+          const list = wrap?.querySelector('.venue-autocomplete__list');
+          if (!list || list.hidden) return;
+          const items = [...list.querySelectorAll('.venue-autocomplete__item')];
+          if (!items.length) return;
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = (activeIndex + 1) % items.length;
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = (activeIndex - 1 + items.length) % items.length;
+          } else if (e.key === 'Enter' && activeIndex >= 0) {
+            e.preventDefault();
+            items[activeIndex].click();
+            return;
+          } else if (e.key === 'Escape') {
+            closeVenueSuggestions();
+            return;
+          } else {
+            return;
+          }
+          items.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
+        });
+
+        tbodyEl.addEventListener('click', (e) => {
+          const item = e.target.closest('.venue-autocomplete__item');
+          if (!item) return;
+          const wrap = item.closest('.venue-autocomplete');
+          const input = wrap?.querySelector('[data-field="venue"]');
+          if (input) {
+            input.value = item.getAttribute('data-venue') || item.textContent.trim();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          closeVenueSuggestions();
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.venue-autocomplete')) closeVenueSuggestions();
+        });
       }
 
       const tbody = document.getElementById('concertsAdminRows');
@@ -1363,6 +1549,7 @@
           tbody.addEventListener('change', refreshPastRowStyles);
           tbody.addEventListener('input', refreshPastRowStyles);
         }
+        wireVenueAutocomplete(tbody);
         refreshPastRowStyles();
       }
 
