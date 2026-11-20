@@ -121,18 +121,32 @@ function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(actual, expected);
 }
 
-function verifyTotp(code, secretBase32) {
-  if (!secretBase32) return false;
-  const totp = new OTPAuth.TOTP({
+function buildTotp(user) {
+  return new OTPAuth.TOTP({
     issuer: "Niels Admin",
-    label: "admin",
+    label: user.username || "admin",
     algorithm: "SHA1",
     digits: 6,
     period: 30,
-    secret: OTPAuth.Secret.fromBase32(secretBase32),
+    secret: OTPAuth.Secret.fromBase32(user.totpSecret),
   });
+}
+
+function verifyTotp(code, user) {
+  if (!user || !user.totpSecret) return false;
+  const totp = buildTotp(user);
   const delta = totp.validate({ token: String(code || "").trim(), window: 1 });
   return delta !== null;
+}
+
+function shouldShowTotpSetup() {
+  const flag = String(process.env.ADMIN_SHOW_TOTP_SETUP || "true").toLowerCase();
+  return flag !== "0" && flag !== "false" && flag !== "off";
+}
+
+function totpSetupUri(user) {
+  if (!shouldShowTotpSetup() || !user) return null;
+  return buildTotp(user).toString();
 }
 
 function setCookie(res, name, value, maxAgeSec) {
@@ -308,7 +322,10 @@ module.exports = async function handler(req, res) {
       },
       sessionSecret
     );
-    json(res, 200, { ok: true, challengeToken });
+    const payload = { ok: true, challengeToken };
+    const setupUri = totpSetupUri(user);
+    if (setupUri) payload.totpSetupUri = setupUri;
+    json(res, 200, payload);
     return;
   }
 
@@ -319,7 +336,7 @@ module.exports = async function handler(req, res) {
       return;
     }
     const user = findUserByUsername(challenge.sub);
-    if (!user || !verifyTotp(body.code, user.totpSecret)) {
+    if (!user || !verifyTotp(body.code, user)) {
       json(res, 401, { ok: false, error: "invalid_totp" });
       return;
     }

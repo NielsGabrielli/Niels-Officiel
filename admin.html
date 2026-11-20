@@ -85,6 +85,37 @@
       padding: 6px 8px;
     }
     .password-toggle:hover { color: #fff; }
+    .auth-totp-setup {
+      margin: 0 0 22px;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(229,210,187,.12);
+      background: rgba(0,0,0,.28);
+      text-align: center;
+    }
+    .auth-totp-setup[hidden] { display: none !important; }
+    .auth-totp-setup p {
+      margin: 0 0 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(229,210,187,.65);
+    }
+    .auth-totp-setup img {
+      width: 180px;
+      height: 180px;
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px;
+      display: block;
+      margin: 0 auto 10px;
+    }
+    .auth-totp-setup code {
+      display: block;
+      font-size: 11px;
+      word-break: break-all;
+      color: rgba(255,255,255,.7);
+      line-height: 1.4;
+    }
     .sidebar { width: 280px; background: rgba(20,20,20,0.95); border-right: 1px solid rgba(229,210,187,.10); display: flex; flex-direction: column; padding: 24px 0; }
     .sidebar__brand { padding: 0 24px 32px; display: flex; align-items: center; justify-content: space-between; }
     .nav-item { padding: 12px 24px; color: rgba(229,210,187,.6); text-decoration: none; font-weight: 500; font-size: 13px; letter-spacing: 0.05em; transition: all 0.2s ease; border-left: 2px solid transparent; display: flex; align-items: center; gap: 12px; }
@@ -210,7 +241,13 @@
 
       <div id="authTotpPanel" class="auth-panel" hidden>
         <h1>Vérification 2FA</h1>
-        <p class="auth-card__hint">Entrez le code à 6 chiffres de votre application d’authentification.</p>
+        <p class="auth-card__hint">Scannez le QR si besoin, puis entrez le code à 6 chiffres.</p>
+        <div id="authTotpSetup" class="auth-totp-setup" hidden>
+          <p>Configurer Google Authenticator / Authy / Microsoft Authenticator</p>
+          <img id="authTotpQr" alt="QR code 2FA" width="180" height="180" />
+          <p style="margin-top:8px;">Ou saisie manuelle de la clé :</p>
+          <code id="authTotpSecret"></code>
+        </div>
         <div id="authTotpError" class="auth-error" role="alert"></div>
         <form id="authTotpForm" autocomplete="one-time-code">
           <div class="form-group">
@@ -521,12 +558,35 @@
       challengeToken = null;
       clearAuthError(document.getElementById('authLoginError'));
       clearAuthError(document.getElementById('authTotpError'));
+      const setup = document.getElementById('authTotpSetup');
+      if (setup) setup.hidden = true;
     }
 
-    function showTotpPanel() {
+    function extractTotpSecret(uri) {
+      try {
+        return new URL(uri).searchParams.get('secret') || '';
+      } catch (_) {
+        const m = String(uri || '').match(/[?&]secret=([^&]+)/i);
+        return m ? decodeURIComponent(m[1]) : '';
+      }
+    }
+
+    function showTotpPanel(totpSetupUri) {
       document.getElementById('authLoginPanel').hidden = true;
       document.getElementById('authTotpPanel').hidden = false;
       clearAuthError(document.getElementById('authTotpError'));
+
+      const setup = document.getElementById('authTotpSetup');
+      const qr = document.getElementById('authTotpQr');
+      const secretEl = document.getElementById('authTotpSecret');
+      if (setup && qr && totpSetupUri) {
+        qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(totpSetupUri);
+        if (secretEl) secretEl.textContent = extractTotpSecret(totpSetupUri);
+        setup.hidden = false;
+      } else if (setup) {
+        setup.hidden = true;
+      }
+
       const code = document.getElementById('authTotpCode');
       if (code) {
         code.value = '';
@@ -581,7 +641,7 @@
             return;
           }
           challengeToken = data.challengeToken;
-          showTotpPanel();
+          showTotpPanel(data.totpSetupUri || null);
         } catch (_) {
           showAuthError(err, 'Impossible de joindre le serveur d’authentification.');
         } finally {
