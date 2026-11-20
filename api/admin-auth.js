@@ -106,7 +106,7 @@ function timingSafeEqualStr(a, b) {
 
 function verifyPassword(password, stored) {
   if (!stored || typeof stored !== "string") return false;
-  // Format: scrypt$saltB64$urlsafeHashB64
+  // Format: scrypt$saltB64$hashB64
   const parts = stored.split("$");
   if (parts.length !== 3 || parts[0] !== "scrypt") return false;
   const salt = Buffer.from(parts[1], "base64");
@@ -154,13 +154,94 @@ function clearCookie(res, name) {
   );
 }
 
+function normalizeUser(entry) {
+  if (!entry || typeof entry !== "object") return null;
+  const username = String(entry.username || entry.u || "").trim();
+  const passwordHash = String(entry.passwordHash || entry.p || "").trim();
+  const totpSecret = String(entry.totpSecret || entry.t || "").trim();
+  if (!username || !passwordHash || !totpSecret) return null;
+  return { username, passwordHash, totpSecret };
+}
+
+/**
+ * Comptes admin :
+ * - legacy : ADMIN_USERNAME + ADMIN_PASSWORD_HASH + ADMIN_TOTP_SECRET
+ * - supplémentaires / multi : ADMIN_USERS = JSON array
+ *   [{"username":"...","passwordHash":"scrypt$...","totpSecret":"..."}]
+ */
+function getAdminUsers() {
+  const users = [];
+  const seen = new Set();
+
+  function pushUser(user) {
+    const normalized = normalizeUser(user);
+    if (!normalized) return;
+    const key = normalized.username.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    users.push(normalized);
+  }
+
+  pushUser({
+    username: process.env.ADMIN_USERNAME,
+    passwordHash: process.env.ADMIN_PASSWORD_HASH,
+    totpSecret: process.env.ADMIN_TOTP_SECRET,
+  });
+
+  // Alias optionnel (même mot de passe / TOTP que le compte principal)
+  const aliases = String(process.env.ADMIN_USERNAME_ALIASES || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  for (const alias of aliases) {
+    pushUser({
+      username: alias,
+      passwordHash: process.env.ADMIN_PASSWORD_HASH,
+      totpSecret: process.env.ADMIN_TOTP_SECRET,
+    });
+  }
+
+  if (process.env.ADMIN_USERS) {
+    try {
+      const parsed = JSON.parse(process.env.ADMIN_USERS);
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      list.forEach(pushUser);
+    } catch {
+      // ignore malformed ADMIN_USERS
+    }
+  }
+
+  return users;
+}
+
 function envConfigured() {
-  return Boolean(
-    process.env.ADMIN_USERNAME &&
-      process.env.ADMIN_PASSWORD_HASH &&
-      process.env.ADMIN_TOTP_SECRET &&
-      getSessionSecret()
-  );
+  return Boolean(getSessionSecret() && getAdminUsers().length > 0);
+}
+
+function findUserByUsername(username) {
+  const users = getAdminUsers();
+  const input = String(username || "");
+  let match = null;
+  for (const user of users) {
+    if (timingSafeEqualStr(input, user.username)) match = user;
+  }
+  // Parcours toujours tous les comptes pour limiter le timing leak
+  return match;
+}
+
+function authenticatePassword(username, password) {
+  const users = getAdminUsers();
+  let matchedUser = null;
+  let anyPassOk = false;
+  for (const user of users) {
+    const userOk = timingSafeEqualStr(username, user.username);
+    const passOk = verifyPassword(password, user.passwordHash);
+    if (userOk && passOk) matchedUser = user;
+    if (passOk) anyPassOk = true;
+  }
+  // anyPassOk évite un avertissement unused et force le calcul
+  void anyPassOk;
+  return matchedUser;
 }
 
 module.exports = async function handler(req, res) {
@@ -212,18 +293,17 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === "login") {
-    const username = String(body.username || "");
+    const username = String(body.username || "").trim();
     const password = String(body.password || "");
-    const userOk = timingSafeEqualStr(username, process.env.ADMIN_USERNAME);
-    const passOk = verifyPassword(password, process.env.ADMIN_PASSWORD_HASH);
-    if (!userOk || !passOk) {
+    const user = authenticatePassword(username, password);
+    if (!user) {
       json(res, 401, { ok: false, error: "invalid_credentials" });
       return;
     }
     const challengeToken = signPayload(
       {
         typ: "challenge",
-        sub: process.env.ADMIN_USERNAME,
+        sub: user.username,
         exp: Date.now() + CHALLENGE_TTL_MS,
       },
       sessionSecret
@@ -238,14 +318,15 @@ module.exports = async function handler(req, res) {
       json(res, 401, { ok: false, error: "invalid_challenge" });
       return;
     }
-    if (!verifyTotp(body.code, process.env.ADMIN_TOTP_SECRET)) {
+    const user = findUserByUsername(challenge.sub);
+    if (!user || !verifyTotp(body.code, user.totpSecret)) {
       json(res, 401, { ok: false, error: "invalid_totp" });
       return;
     }
     const sessionToken = signPayload(
       {
         typ: "session",
-        sub: challenge.sub,
+        sub: user.username,
         exp: Date.now() + SESSION_TTL_MS,
       },
       sessionSecret
