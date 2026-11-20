@@ -597,8 +597,18 @@ async function loadConcertsData() {
         if (parsed && Array.isArray(parsed.concerts)) return parsed;
       }
     } catch {
-      /* JSON public par défaut */
+      /* source publiée par défaut */
     }
+  }
+
+  try {
+    const apiRes = await fetch("/api/concerts", { cache: "no-store" });
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      if (data && Array.isArray(data.concerts)) return data;
+    }
+  } catch {
+    /* fallback fichier statique */
   }
 
   const res = await fetch("./assets/concerts.json", { cache: "no-store" });

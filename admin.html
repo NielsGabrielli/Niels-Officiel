@@ -290,7 +290,6 @@
   <main class="main-content">
     <div class="topbar">
       <h1 class="page-title" id="pageTitle">Vue d'ensemble</h1>
-      <button class="btn-save">Enregistrer les modifications</button>
     </div>
 
     <!-- Dashboard Tab -->
@@ -376,8 +375,8 @@
           Renseignez le <strong style="color: rgba(229,210,187,.85);">lien de réservation</strong> (billetterie, événement Facebook, Shotgun, etc. — URL complète commençant par <code style="font-size: 12px;">https://</code>).
           Si le champ est vide, le site affichera un lien vers la page contact.
           <br /><br />
-          <strong>Enregistrer l’agenda</strong> sauvegarde dans ce navigateur et propose un fichier <code>concerts.json</code> à placer dans <code>assets/concerts.json</code> pour la mise en ligne.
-          Utilisez <strong>Aperçu sur le site</strong> pour voir le rendu avant publication.
+          <strong>Publier l’agenda</strong> met les dates en ligne immédiatement sur la homepage (section Concerts).
+          Utilisez <strong>Aperçu sur le site</strong> pour prévisualiser avant publication.
         </p>
         <div class="form-group">
           <label class="form-label" for="concertsIntroAdmin">Texte sous le titre « Agenda / Concerts » (optionnel)</label>
@@ -400,7 +399,7 @@
           <button type="button" class="add-new" id="concertsAddRow" style="flex: 1; min-width: 200px;">+ Ajouter une date</button>
           <button type="button" class="action-btn delete" id="concertsDeletePastBtn">Supprimer les dates passées</button>
           <button type="button" class="action-btn" id="concertsPreviewBtn">Aperçu sur le site</button>
-          <button type="button" class="btn-save" id="concertsSaveBtn">Enregistrer l’agenda</button>
+          <button type="button" class="btn-save" id="concertsSaveBtn">Publier l’agenda</button>
           <span style="font-size: 12px; color: rgba(255,255,255,.45);" id="concertsSaveHint"></span>
         </div>
       </div>
@@ -908,21 +907,6 @@
         });
       });
       
-      const topSaveBtn = document.querySelector('.topbar .btn-save');
-      if (topSaveBtn) {
-        topSaveBtn.addEventListener('click', function() {
-          const originalText = this.textContent;
-          this.textContent = 'Enregistré !';
-          this.style.background = '#28a745';
-          this.style.boxShadow = '0 6px 16px rgba(40,167,69,.4)';
-          setTimeout(() => {
-            this.textContent = originalText;
-            this.style.background = '';
-            this.style.boxShadow = '';
-          }, 2000);
-        });
-      }
-
       const CONCERTS_KEY = 'niels_concerts_v1';
 
       function uid() {
@@ -1340,9 +1324,18 @@
       async function loadConcertsAdmin() {
         let data = null;
         try {
-          const raw = localStorage.getItem(CONCERTS_KEY);
-          if (raw) data = JSON.parse(raw);
+          const apiRes = await fetch('/api/concerts', { cache: 'no-store', credentials: 'same-origin' });
+          if (apiRes.ok) {
+            const parsed = await apiRes.json();
+            if (parsed && Array.isArray(parsed.concerts)) data = parsed;
+          }
         } catch (e) {}
+        if (!data || !Array.isArray(data.concerts)) {
+          try {
+            const raw = localStorage.getItem(CONCERTS_KEY);
+            if (raw) data = JSON.parse(raw);
+          } catch (e) {}
+        }
         if (!data || !Array.isArray(data.concerts)) {
           try {
             const res = await fetch('./assets/concerts.json', { cache: 'no-store' });
@@ -1410,16 +1403,7 @@
         refreshPastRowStyles();
       }
 
-      function downloadConcertsJson(payload) {
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'concerts.json';
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }
-
-      function saveConcertsAdmin(options) {
+      async function saveConcertsAdmin(options) {
         const opts = options || {};
         const payload = collectConcertsPayload();
         try {
@@ -1428,25 +1412,63 @@
           alert('Impossible d’enregistrer dans le navigateur (stockage plein ou privé).');
           return;
         }
-        if (opts.download !== false) downloadConcertsJson(payload);
+
         const btn = document.getElementById('concertsSaveBtn');
-        if (btn) {
-          const t = btn.textContent;
-          btn.textContent = 'Enregistré + téléchargement';
-          btn.style.background = '#28a745';
-          setTimeout(() => {
-            btn.textContent = t;
-            btn.style.background = '';
-          }, 2200);
-        }
         const hint = document.getElementById('concertsSaveHint');
-        if (hint) {
-          hint.textContent = opts.download === false
-            ? 'Agenda mis à jour dans ce navigateur.'
-            : 'Remplacez assets/concerts.json sur le serveur avec le fichier téléchargé, puis redéployez.';
-          setTimeout(() => {
-            hint.textContent = '';
-          }, 8000);
+        const originalLabel = btn ? btn.textContent : '';
+
+        if (opts.publish === false) {
+          if (hint) {
+            hint.textContent = 'Agenda mis à jour dans ce navigateur.';
+            setTimeout(() => { hint.textContent = ''; }, 6000);
+          }
+          return;
+        }
+
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Publication…';
+        }
+
+        try {
+          const res = await fetch('/api/concerts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'publish', data: payload }),
+          });
+          let data = {};
+          try { data = await res.json(); } catch (_) {}
+          if (!res.ok || !data.ok) {
+            let msg = 'Publication impossible.';
+            if (data.error === 'unauthorized') msg = 'Session expirée — reconnectez-vous.';
+            else if (data.error === 'blob_required') msg = data.message || 'Blob Store Vercel requis.';
+            if (hint) hint.textContent = msg;
+            if (btn) {
+              btn.textContent = originalLabel || 'Publier l’agenda';
+              btn.disabled = false;
+            }
+            return;
+          }
+          if (btn) {
+            btn.textContent = 'Publié';
+            btn.style.background = '#28a745';
+            setTimeout(() => {
+              btn.textContent = originalLabel || 'Publier l’agenda';
+              btn.style.background = '';
+              btn.disabled = false;
+            }, 2200);
+          }
+          if (hint) {
+            hint.textContent = 'Agenda publié sur la homepage (section Concerts).';
+            setTimeout(() => { hint.textContent = ''; }, 8000);
+          }
+        } catch (_) {
+          if (hint) hint.textContent = 'Impossible de joindre le serveur de publication.';
+          if (btn) {
+            btn.textContent = originalLabel || 'Publier l’agenda';
+            btn.disabled = false;
+          }
         }
       }
 
