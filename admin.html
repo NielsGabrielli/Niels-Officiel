@@ -277,6 +277,7 @@
       <a href="#tab-concerts" class="nav-item" data-target="tab-concerts">Section Concerts</a>
       <a href="#tab-boutique" class="nav-item" data-target="tab-boutique">Section Boutique</a>
       <a href="#tab-contact" class="nav-item" data-target="tab-contact">Paramètres Contact</a>
+      <a href="#tab-securite" class="nav-item" data-target="tab-securite">Sécurité</a>
     </nav>
     
     <div style="margin-top: auto; padding: 24px; display: flex; flex-direction: column; gap: 10px;">
@@ -478,6 +479,55 @@
       </div>
     </div>
 
+    <!-- Sécurité Tab -->
+    <div id="tab-securite" class="tab-content">
+      <div class="admin-card">
+        <h3>Compte connecté</h3>
+        <p style="margin:0 0 8px; font-size:14px; color:rgba(255,255,255,.75);">
+          Identifiant : <strong id="securityUsername">—</strong>
+        </p>
+        <p id="securityBlobHint" style="margin:0; font-size:13px; color:rgba(229,210,187,.55); line-height:1.5;"></p>
+      </div>
+      <div class="admin-card">
+        <h3>Changer le mot de passe</h3>
+        <p style="margin:0 0 18px; font-size:13px; color:rgba(255,255,255,.55); line-height:1.5;">
+          Le nouveau mot de passe s’applique immédiatement (nécessite un Blob Store Vercel).
+        </p>
+        <div id="securityPasswordError" class="auth-error" role="alert"></div>
+        <div id="securityPasswordOk" style="display:none; margin:0 0 16px; padding:10px 12px; border-radius:8px; background:rgba(40,167,69,.15); border:1px solid rgba(40,167,69,.35); color:#7ddea0; font-size:13px;">
+          Mot de passe mis à jour.
+        </div>
+        <form id="securityPasswordForm">
+          <div class="form-group">
+            <label class="form-label" for="securityCurrentPassword">Mot de passe actuel</label>
+            <input class="form-input" type="password" id="securityCurrentPassword" autocomplete="current-password" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="securityNewPassword">Nouveau mot de passe</label>
+            <input class="form-input" type="password" id="securityNewPassword" autocomplete="new-password" minlength="8" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="securityNewPassword2">Confirmer le nouveau mot de passe</label>
+            <input class="form-input" type="password" id="securityNewPassword2" autocomplete="new-password" minlength="8" required />
+          </div>
+          <button type="submit" class="btn-save" id="securityPasswordBtn">Enregistrer le mot de passe</button>
+        </form>
+      </div>
+      <div class="admin-card">
+        <h3>Application 2FA</h3>
+        <p style="margin:0 0 16px; font-size:13px; color:rgba(255,255,255,.55); line-height:1.5;">
+          Le QR est masqué après la première connexion réussie. Vous pouvez le réafficher ici pour scanner un nouvel appareil.
+        </p>
+        <button type="button" class="action-btn" id="securityShowTotpBtn">Afficher le QR 2FA</button>
+        <div id="securityTotpSetup" class="auth-totp-setup" hidden style="margin-top:16px;">
+          <p>Scannez avec Authenticator / Authy</p>
+          <img id="securityTotpQr" alt="QR code 2FA" width="180" height="180" />
+          <p style="margin-top:8px;">Clé manuelle :</p>
+          <code id="securityTotpSecret"></code>
+        </div>
+      </div>
+    </div>
+
     <!-- Discographie Tab -->
     <div id="tab-discographie" class="tab-content">
       <div class="admin-card">
@@ -522,6 +572,22 @@
     const AUTH_API = '/api/admin-auth';
     let challengeToken = null;
     let adminDashboardReady = false;
+    let adminSessionUser = null;
+    let adminBlobReady = false;
+
+    function totpEnrolledKey(username) {
+      return 'niels_admin_totp_enrolled:' + String(username || '').toLowerCase();
+    }
+
+    function markTotpEnrolledLocal(username) {
+      if (!username) return;
+      try { localStorage.setItem(totpEnrolledKey(username), '1'); } catch (_) {}
+    }
+
+    function isTotpEnrolledLocal(username) {
+      if (!username) return false;
+      try { return localStorage.getItem(totpEnrolledKey(username)) === '1'; } catch (_) { return false; }
+    }
 
     // Forcer www pour que le cookie de session et l’API restent sur le même host.
     if (location.hostname === 'niels-officiel.fr') {
@@ -571,20 +637,32 @@
       }
     }
 
-    function showTotpPanel(totpSetupUri) {
+    function renderTotpQr(setupEl, qrEl, secretEl, totpSetupUri) {
+      if (!setupEl || !qrEl || !totpSetupUri) {
+        if (setupEl) setupEl.hidden = true;
+        return;
+      }
+      qrEl.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(totpSetupUri);
+      if (secretEl) secretEl.textContent = extractTotpSecret(totpSetupUri);
+      setupEl.hidden = false;
+    }
+
+    function showTotpPanel(totpSetupUri, username) {
       document.getElementById('authLoginPanel').hidden = true;
       document.getElementById('authTotpPanel').hidden = false;
       clearAuthError(document.getElementById('authTotpError'));
 
       const setup = document.getElementById('authTotpSetup');
-      const qr = document.getElementById('authTotpQr');
-      const secretEl = document.getElementById('authTotpSecret');
-      if (setup && qr && totpSetupUri) {
-        qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(totpSetupUri);
-        if (secretEl) secretEl.textContent = extractTotpSecret(totpSetupUri);
-        setup.hidden = false;
-      } else if (setup) {
-        setup.hidden = true;
+      const alreadyEnrolled = isTotpEnrolledLocal(username);
+      if (alreadyEnrolled) {
+        if (setup) setup.hidden = true;
+      } else {
+        renderTotpQr(
+          setup,
+          document.getElementById('authTotpQr'),
+          document.getElementById('authTotpSecret'),
+          totpSetupUri
+        );
       }
 
       const code = document.getElementById('authTotpCode');
@@ -641,7 +719,9 @@
             return;
           }
           challengeToken = data.challengeToken;
-          showTotpPanel(data.totpSetupUri || null);
+          const loginUser = (document.getElementById('authUsername')?.value || '').trim();
+          const uri = data.enrolled ? null : (data.totpSetupUri || null);
+          showTotpPanel(uri, loginUser);
         } catch (_) {
           showAuthError(err, 'Impossible de joindre le serveur d’authentification.');
         } finally {
@@ -666,6 +746,8 @@
             showAuthError(err, 'Code 2FA invalide ou expiré. Réessayez.');
             return;
           }
+          adminSessionUser = data.username || (document.getElementById('authUsername')?.value || '').trim();
+          markTotpEnrolledLocal(adminSessionUser);
           revealAdminApp();
         } catch (_) {
           showAuthError(err, 'Impossible de joindre le serveur d’authentification.');
@@ -689,6 +771,8 @@
       try {
         const { data } = await authRequest({ action: 'session' });
         if (data && data.authenticated) {
+          adminSessionUser = data.username || null;
+          adminBlobReady = Boolean(data.blobReady);
           revealAdminApp();
           return;
         }
@@ -697,9 +781,95 @@
       document.getElementById('authUsername')?.focus();
     }
 
+    function initSecurityPanel() {
+      const userEl = document.getElementById('securityUsername');
+      if (userEl) userEl.textContent = adminSessionUser || '—';
+      const hint = document.getElementById('securityBlobHint');
+      if (hint) {
+        hint.textContent = adminBlobReady
+          ? 'Stockage Blob Vercel détecté : changement de mot de passe actif.'
+          : 'Pour changer le mot de passe : Vercel → Storage → Create Blob Store (le token BLOB_READ_WRITE_TOKEN est ajouté auto). Puis redeploy.';
+      }
+
+      const pwdForm = document.getElementById('securityPasswordForm');
+      pwdForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('securityPasswordError');
+        const ok = document.getElementById('securityPasswordOk');
+        clearAuthError(err);
+        if (ok) ok.style.display = 'none';
+        const currentPassword = document.getElementById('securityCurrentPassword')?.value || '';
+        const newPassword = document.getElementById('securityNewPassword')?.value || '';
+        const newPassword2 = document.getElementById('securityNewPassword2')?.value || '';
+        if (newPassword !== newPassword2) {
+          showAuthError(err, 'La confirmation ne correspond pas.');
+          return;
+        }
+        const btn = document.getElementById('securityPasswordBtn');
+        if (btn) btn.disabled = true;
+        try {
+          const { res, data } = await authRequest({
+            action: 'changePassword',
+            currentPassword,
+            newPassword,
+          });
+          if (!res.ok || !data.ok) {
+            let msg = 'Impossible de changer le mot de passe.';
+            if (data.error === 'invalid_credentials') msg = 'Mot de passe actuel incorrect.';
+            else if (data.error === 'password_too_short') msg = 'Le nouveau mot de passe doit faire au moins 8 caractères.';
+            else if (data.error === 'blob_required') msg = data.message || 'Blob Store Vercel requis.';
+            showAuthError(err, msg);
+            return;
+          }
+          if (ok) ok.style.display = 'block';
+          pwdForm.reset();
+        } catch (_) {
+          showAuthError(err, 'Impossible de joindre le serveur.');
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      });
+
+      document.getElementById('securityShowTotpBtn')?.addEventListener('click', async () => {
+        const setup = document.getElementById('securityTotpSetup');
+        try {
+          const { res, data } = await authRequest({ action: 'totpSetup' });
+          if (!res.ok || !data.ok || !data.totpSetupUri) {
+            alert('Impossible de charger le QR 2FA.');
+            return;
+          }
+          renderTotpQr(
+            setup,
+            document.getElementById('securityTotpQr'),
+            document.getElementById('securityTotpSecret'),
+            data.totpSetupUri
+          );
+        } catch (_) {
+          alert('Impossible de joindre le serveur.');
+        }
+      });
+    }
+
     function initAdminDashboard() {
       if (adminDashboardReady) return;
       adminDashboardReady = true;
+      initSecurityPanel();
+      // Rafraîchir username / blob si session déjà connue
+      authRequest({ action: 'session' }).then(({ data }) => {
+        if (data && data.authenticated) {
+          adminSessionUser = data.username || adminSessionUser;
+          adminBlobReady = Boolean(data.blobReady);
+          const userEl = document.getElementById('securityUsername');
+          if (userEl) userEl.textContent = adminSessionUser || '—';
+          const hint = document.getElementById('securityBlobHint');
+          if (hint) {
+            hint.textContent = adminBlobReady
+              ? 'Stockage Blob Vercel détecté : changement de mot de passe actif.'
+              : 'Pour changer le mot de passe : Vercel → Storage → Create Blob Store (le token BLOB_READ_WRITE_TOKEN est ajouté auto). Puis redeploy.';
+          }
+        }
+      }).catch(() => {});
+
       const navItems = document.querySelectorAll('.nav-item[data-target]');
       const tabContents = document.querySelectorAll('.tab-content');
       const pageTitle = document.getElementById('pageTitle');
