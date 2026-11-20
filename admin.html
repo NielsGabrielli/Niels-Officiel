@@ -243,6 +243,95 @@
       border: 1px solid rgba(229,210,187,.15);
       background: rgba(0,0,0,.4);
     }
+    .shop-images-dropzone {
+      border: 1px dashed rgba(229,210,187,.28);
+      border-radius: 12px;
+      padding: 18px;
+      background: rgba(0,0,0,.22);
+      text-align: center;
+      transition: border-color .2s, background .2s;
+      cursor: pointer;
+    }
+    .shop-images-dropzone.is-dragover {
+      border-color: var(--terracotta);
+      background: rgba(208,80,51,.08);
+    }
+    .shop-images-dropzone p {
+      margin: 0;
+      font-size: 13px;
+      color: rgba(229,210,187,.7);
+      line-height: 1.45;
+    }
+    .shop-images-dropzone input[type="file"] {
+      display: none;
+    }
+    .shop-images-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .shop-image-chip {
+      position: relative;
+      width: 72px;
+    }
+    .shop-image-chip img {
+      width: 72px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid rgba(229,210,187,.18);
+      background: rgba(0,0,0,.35);
+      display: block;
+    }
+    .shop-image-chip .shop-image-remove {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(220,53,69,.95);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .shop-image-chip .shop-image-cover {
+      display: block;
+      margin-top: 4px;
+      font-size: 10px;
+      text-align: center;
+      color: rgba(229,210,187,.55);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .shop-types-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .shop-type-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(229,210,187,.08);
+      border: 1px solid rgba(229,210,187,.14);
+      font-size: 12px;
+      color: rgba(255,255,255,.85);
+    }
+    .shop-type-chip button {
+      background: transparent;
+      border: none;
+      color: #ff8a8a;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+    }
     .shop-product-block.is-unpublished {
       opacity: 0.72;
       border-style: dashed;
@@ -463,7 +552,9 @@
       <div class="admin-card">
         <h3>Paramètres boutique</h3>
         <p style="font-size: 13px; color: rgba(255,255,255,.6); margin: -8px 0 20px; line-height: 1.55;">
-          Les données sont enregistrées dans ce navigateur et un fichier <code style="font-size: 12px;">shop.json</code> est proposé au téléchargement — à déposer dans <code style="font-size: 12px;">assets/shop.json</code> pour la mise en ligne.
+          <strong>Publier la boutique</strong> met les produits en ligne immédiatement.
+          Les <strong>types de produits</strong> serviront plus tard aux filtres de la page boutique.
+          Stripe sera branché dans un second temps.
           <br /><br />
           <strong style="color: rgba(229,210,187,.85);">≤ 3 produits publiés</strong>&nbsp;: uniquement la section boutique sur l’accueil.
           <strong style="color: rgba(229,210,187,.85);">&gt; 3 produits</strong>&nbsp;: page <code style="font-size:12px;">/boutique</code>, lien navbar et bouton «&nbsp;Toute la boutique&nbsp;».
@@ -494,17 +585,32 @@
       </div>
 
       <div class="admin-card">
+        <h3>Types de produits</h3>
+        <p style="font-size: 13px; color: rgba(255,255,255,.55); margin: -8px 0 14px; line-height: 1.5;">
+          Utilisés pour classer les produits et filtrer plus tard sur la page boutique.
+        </p>
+        <div class="shop-types-list" id="shopTypesList"></div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:end;">
+          <div class="form-group" style="margin:0; flex:1; min-width:160px;">
+            <label class="form-label" for="shopTypeLabelInput">Nouveau type</label>
+            <input type="text" class="form-input" id="shopTypeLabelInput" placeholder="ex. Livre, Goodies…" />
+          </div>
+          <button type="button" class="action-btn" id="shopTypeAddBtn">Ajouter le type</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
         <h3>Produits</h3>
         <p style="font-size: 13px; color: rgba(255,255,255,.55); margin: -8px 0 18px;">
-          Ordre d’affichage = ordre sur le site. Image&nbsp;: chemin relatif (ex. <code style="font-size: 12px;">assets/shop/photo.jpg</code>).
-          Page CMS&nbsp;: <code>/produit/slug</code> ou URL complète.
+          Ordre d’affichage = ordre sur le site. Ajoutez une ou plusieurs images (drag &amp; drop ou téléversement).
+          La première image sert de couverture.
         </p>
         <div id="shopProductsAdmin"></div>
         <button type="button" class="add-new" id="shopAddProduct">+ Ajouter un produit</button>
         <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
           <button type="button" class="action-btn" id="shopPreviewHomeTabBtn">Aperçu accueil</button>
           <button type="button" class="action-btn" id="shopPreviewCatalogTabBtn">Aperçu catalogue</button>
-          <button type="button" class="btn-save" id="shopSaveBtn">Enregistrer la boutique</button>
+          <button type="button" class="btn-save" id="shopSaveBtn">Publier la boutique</button>
           <span style="font-size: 12px; color: rgba(255,255,255,.45);" id="shopSaveHint"></span>
         </div>
       </div>
@@ -982,9 +1088,36 @@
 
       const SHOP_KEY = 'niels_shop_v1';
       const SHOP_HOMEPAGE_LIMIT = 3;
+      const DEFAULT_SHOP_TYPES = [
+        { id: 'vetement', label: 'Vêtement' },
+        { id: 'musique', label: 'Musique' },
+        { id: 'affiche', label: 'Affiche' },
+        { id: 'accessoire', label: 'Accessoire' },
+        { id: 'autre', label: 'Autre' },
+      ];
+      let shopProductTypes = DEFAULT_SHOP_TYPES.map((t) => ({ ...t }));
 
       function shopProductUid() {
         return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      }
+
+      function slugifyShopType(label) {
+        return String(label || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 40) || 'type';
+      }
+
+      function normalizeShopImages(row) {
+        const images = Array.isArray(row.images)
+          ? row.images.map((u) => String(u || '').trim()).filter(Boolean)
+          : [];
+        const legacy = String(row.image || '').trim();
+        if (legacy && !images.includes(legacy)) images.unshift(legacy);
+        return images;
       }
 
       function countPublishedShopProducts(products) {
@@ -998,13 +1131,138 @@
         block.classList.toggle('is-unpublished', !isPublished);
       }
 
+      function renderShopTypesList() {
+        const list = document.getElementById('shopTypesList');
+        if (!list) return;
+        list.innerHTML = shopProductTypes.map((t) => `
+          <span class="shop-type-chip" data-type-id="${escapeHtmlAttr(t.id)}">
+            ${escapeHtmlText(t.label)}
+            <button type="button" data-shop-type-remove="${escapeHtmlAttr(t.id)}" aria-label="Supprimer ${escapeHtmlAttr(t.label)}">×</button>
+          </span>
+        `).join('');
+        document.querySelectorAll('.shop-product-block [data-field="type"]').forEach((sel) => {
+          const current = sel.value;
+          sel.innerHTML = shopProductTypes.map((t) =>
+            `<option value="${escapeHtmlAttr(t.id)}">${escapeHtmlText(t.label)}</option>`
+          ).join('');
+          if (shopProductTypes.some((t) => t.id === current)) sel.value = current;
+          else if (shopProductTypes[0]) sel.value = shopProductTypes[0].id;
+        });
+      }
+
+      function renderShopImagesGrid(block) {
+        const grid = block.querySelector('[data-shop-images-grid]');
+        if (!grid) return;
+        const images = normalizeShopImages({ images: JSON.parse(block.dataset.images || '[]') });
+        block.dataset.images = JSON.stringify(images);
+        if (!images.length) {
+          grid.innerHTML = '<p style="margin:0;font-size:12px;color:rgba(255,255,255,.4);">Aucune image pour l’instant.</p>';
+          return;
+        }
+        grid.innerHTML = images.map((url, index) => `
+          <div class="shop-image-chip" data-image-index="${index}">
+            <img src="${escapeHtmlAttr(url)}" alt="Image produit ${index + 1}" loading="lazy" />
+            <button type="button" class="shop-image-remove" data-shop-image-remove="${index}" aria-label="Retirer l’image">×</button>
+            ${index === 0 ? '<span class="shop-image-cover">Couverture</span>' : '<span class="shop-image-cover">&nbsp;</span>'}
+          </div>
+        `).join('');
+      }
+
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function uploadShopImageFile(file) {
+        const dataBase64 = await fileToBase64(file);
+        const res = await fetch('/api/shop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            action: 'uploadImage',
+            fileName: file.name || 'image.jpg',
+            contentType: file.type || 'image/jpeg',
+            dataBase64,
+          }),
+        });
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+        if (!res.ok || !data.ok || !data.url) {
+          const err = new Error(data.error || 'upload_failed');
+          err.payload = data;
+          throw err;
+        }
+        return data.url;
+      }
+
+      async function addImagesToProductBlock(block, files) {
+        const list = [...files].filter((f) => f && /^image\//i.test(f.type));
+        if (!list.length) return;
+        const hint = document.getElementById('shopSaveHint');
+        for (const file of list) {
+          try {
+            if (hint) hint.textContent = `Téléversement de ${file.name}…`;
+            const url = await uploadShopImageFile(file);
+            const images = normalizeShopImages({ images: JSON.parse(block.dataset.images || '[]') });
+            images.push(url);
+            block.dataset.images = JSON.stringify(images);
+            renderShopImagesGrid(block);
+          } catch (err) {
+            const msg = err?.payload?.message
+              || (err?.message === 'blob_required' ? 'Blob Store Vercel requis pour téléverser.' : null)
+              || (err?.message === 'file_too_large' ? 'Image trop lourde (max ~3,5 Mo).' : null)
+              || `Échec du téléversement (${file.name}).`;
+            if (hint) hint.textContent = msg;
+            alert(msg);
+          }
+        }
+        if (hint) {
+          setTimeout(() => {
+            if (hint.textContent.includes('Téléversement')) hint.textContent = '';
+          }, 2500);
+        }
+        updateDashboardShopStats();
+      }
+
+      function wireShopImagesDropzone(block) {
+        const zone = block.querySelector('[data-shop-dropzone]');
+        const input = block.querySelector('[data-shop-file-input]');
+        if (!zone || !input) return;
+        zone.addEventListener('click', () => input.click());
+        input.addEventListener('change', () => {
+          if (input.files?.length) addImagesToProductBlock(block, input.files);
+          input.value = '';
+        });
+        zone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          zone.classList.add('is-dragover');
+        });
+        zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
+        zone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          zone.classList.remove('is-dragover');
+          if (e.dataTransfer?.files?.length) addImagesToProductBlock(block, e.dataTransfer.files);
+        });
+      }
+
       function createShopProductBlock(row) {
         const wrap = document.createElement('div');
         wrap.className = 'shop-product-block';
         const id = row.id || shopProductUid();
         wrap.dataset.id = id;
+        const images = normalizeShopImages(row);
+        wrap.dataset.images = JSON.stringify(images);
         const isPublished = row.published !== false;
+        const selectedType = row.type || 'autre';
         if (!isPublished) wrap.classList.add('is-unpublished');
+        const typeOptions = shopProductTypes.map((t) =>
+          `<option value="${escapeHtmlAttr(t.id)}" ${t.id === selectedType ? 'selected' : ''}>${escapeHtmlText(t.label)}</option>`
+        ).join('');
         wrap.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
             <div style="display:flex; gap:8px; align-items:center;">
@@ -1023,8 +1281,18 @@
               <input type="text" class="form-input" data-field="id" value="${escapeHtmlAttr(id)}" />
             </div>
             <div class="form-group">
+              <label class="form-label">Type de produit</label>
+              <select class="form-input" data-field="type">${typeOptions}</select>
+            </div>
+          </div>
+          <div class="shop-admin-grid">
+            <div class="form-group">
               <label class="form-label">Prix affiché</label>
               <input type="text" class="form-input" data-field="price" value="${escapeHtmlAttr(row.price || '')}" placeholder="ex. 32 €" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">URL page produit CMS (optionnel)</label>
+              <input type="text" class="form-input" data-field="cmsPageUrl" value="${escapeHtmlAttr(row.cmsPageUrl || '')}" placeholder="/produit/slug ou https://…" />
             </div>
           </div>
           <div class="form-group">
@@ -1039,45 +1307,24 @@
             <label class="form-label">Texte détaillé (fenêtre au clic)</label>
             <textarea class="form-input" data-field="detail" rows="4" placeholder="Visible uniquement dans la modale.">${escapeHtmlText(row.detail || '')}</textarea>
           </div>
-          <div class="shop-admin-grid">
-            <div class="form-group">
-              <label class="form-label">Chemin ou URL image</label>
-              <input type="text" class="form-input" data-field="image" value="${escapeHtmlAttr(row.image || '')}" placeholder="assets/shop/photo.jpg" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Aperçu</label>
-              <div><img class="shop-thumb-preview" data-shop-preview alt="" width="72" height="72" loading="lazy" /></div>
-            </div>
-          </div>
           <div class="form-group">
-            <label class="form-label">URL page produit CMS</label>
-            <input type="text" class="form-input" data-field="cmsPageUrl" value="${escapeHtmlAttr(row.cmsPageUrl || '')}" placeholder="/produit/slug ou https://…" />
+            <label class="form-label">Images produit</label>
+            <div class="shop-images-dropzone" data-shop-dropzone>
+              <p>Glissez-déposez une ou plusieurs images ici<br />ou cliquez pour téléverser (JPG, PNG, WebP — max 3,5&nbsp;Mo)</p>
+              <input type="file" accept="image/*" multiple data-shop-file-input />
+            </div>
+            <div class="shop-images-grid" data-shop-images-grid></div>
           </div>
         `;
-        const img = wrap.querySelector('[data-shop-preview]');
-        const imgIn = wrap.querySelector('[data-field="image"]');
         const publishedInput = wrap.querySelector('[data-field="published"]');
-        function syncPreview() {
-          const u = imgIn && imgIn.value ? imgIn.value.trim() : '';
-          if (!img) return;
-          if (u) {
-            img.src = u;
-            img.alt = 'Aperçu';
-            img.style.opacity = '1';
-          } else {
-            img.removeAttribute('src');
-            img.alt = '';
-            img.style.opacity = '0.25';
-          }
-        }
-        syncPreview();
-        if (imgIn) imgIn.addEventListener('input', syncPreview);
         if (publishedInput) {
           publishedInput.addEventListener('change', () => {
             syncShopProductBlockState(wrap);
             updateDashboardShopStats();
           });
         }
+        renderShopImagesGrid(wrap);
+        wireShopImagesDropzone(wrap);
         return wrap;
       }
 
@@ -1087,11 +1334,12 @@
         const ctaEl = document.getElementById('shopCtaLabelAdmin');
         const cmsCtaEl = document.getElementById('shopCmsCtaLabelAdmin');
         const payload = {
-          version: 3,
+          version: 4,
           intro: introEl ? String(introEl.value || '').trim() : '',
           shopUrl: urlEl ? String(urlEl.value || '').trim() : '',
           shopCtaLabel: ctaEl ? String(ctaEl.value || '').trim() : '',
           cmsCtaLabel: cmsCtaEl ? String(cmsCtaEl.value || '').trim() : '',
+          productTypes: shopProductTypes.slice(),
           products: [],
         };
         const container = document.getElementById('shopProductsAdmin');
@@ -1107,18 +1355,22 @@
           const description = get('description');
           const detail = get('detail');
           const price = get('price');
-          const image = get('image');
+          const type = get('type') || 'autre';
           const cmsPageUrl = get('cmsPageUrl');
+          const images = normalizeShopImages({ images: JSON.parse(block.dataset.images || '[]') });
+          const image = images[0] || '';
           const publishedEl = block.querySelector('[data-field="published"]');
           const published = publishedEl ? publishedEl.checked : true;
-          if (!title && !description && !detail && !price && !image && !cmsPageUrl) return;
+          if (!title && !description && !detail && !price && !images.length && !cmsPageUrl) return;
           payload.products.push({
             id: pid,
             title,
             description,
             detail,
             price,
+            type,
             image,
+            images,
             cmsPageUrl,
             published,
           });
@@ -1171,41 +1423,74 @@
         window.open(url, '_blank', 'noopener');
       }
 
-      function saveShopAdmin() {
+      async function saveShopAdmin() {
         const payload = collectShopPayload();
         if (!saveShopAdminToStorage()) return;
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'shop.json';
-        a.click();
-        URL.revokeObjectURL(a.href);
         updateDashboardShopStats();
         const btn = document.getElementById('shopSaveBtn');
         const hint = document.getElementById('shopSaveHint');
+        const originalLabel = btn ? btn.textContent : 'Publier la boutique';
         if (btn) {
-          const t = btn.textContent;
-          btn.textContent = 'Enregistré + téléchargement';
-          btn.style.background = '#28a745';
-          setTimeout(function () {
-            btn.textContent = t;
-            btn.style.background = '';
-          }, 2200);
+          btn.disabled = true;
+          btn.textContent = 'Publication…';
         }
-        if (hint) {
-          hint.textContent = 'Remplacez assets/shop.json sur le serveur avec le fichier téléchargé.';
-          setTimeout(function () {
-            hint.textContent = '';
-          }, 8000);
+        try {
+          const res = await fetch('/api/shop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'publish', data: payload }),
+          });
+          let data = {};
+          try { data = await res.json(); } catch (_) {}
+          if (!res.ok || !data.ok) {
+            let msg = 'Publication impossible.';
+            if (data.error === 'unauthorized') msg = 'Session expirée — reconnectez-vous.';
+            else if (data.error === 'blob_required') msg = data.message || 'Blob Store Vercel requis.';
+            if (hint) hint.textContent = msg;
+            if (btn) {
+              btn.textContent = originalLabel;
+              btn.disabled = false;
+            }
+            return;
+          }
+          if (btn) {
+            btn.textContent = 'Publié';
+            btn.style.background = '#28a745';
+            setTimeout(function () {
+              btn.textContent = originalLabel;
+              btn.style.background = '';
+              btn.disabled = false;
+            }, 2200);
+          }
+          if (hint) {
+            hint.textContent = 'Boutique publiée sur le site.';
+            setTimeout(function () { hint.textContent = ''; }, 8000);
+          }
+        } catch (_) {
+          if (hint) hint.textContent = 'Impossible de joindre le serveur de publication.';
+          if (btn) {
+            btn.textContent = originalLabel;
+            btn.disabled = false;
+          }
         }
       }
 
       async function loadShopAdmin() {
         let data = null;
         try {
-          const raw = localStorage.getItem(SHOP_KEY);
-          if (raw) data = JSON.parse(raw);
+          const apiRes = await fetch('/api/shop', { cache: 'no-store', credentials: 'same-origin' });
+          if (apiRes.ok) {
+            const parsed = await apiRes.json();
+            if (parsed && Array.isArray(parsed.products)) data = parsed;
+          }
         } catch (e) {}
+        if (!data || !Array.isArray(data.products)) {
+          try {
+            const raw = localStorage.getItem(SHOP_KEY);
+            if (raw) data = JSON.parse(raw);
+          } catch (e) {}
+        }
         if (!data || !Array.isArray(data.products)) {
           try {
             const res = await fetch('./assets/shop.json', { cache: 'no-store' });
@@ -1213,8 +1498,20 @@
           } catch (e) {}
         }
         if (!data) {
-          data = { version: 3, intro: '', shopUrl: '', shopCtaLabel: '', cmsCtaLabel: '', products: [] };
+          data = {
+            version: 4,
+            intro: '',
+            shopUrl: '',
+            shopCtaLabel: '',
+            cmsCtaLabel: '',
+            productTypes: DEFAULT_SHOP_TYPES.slice(),
+            products: [],
+          };
         }
+        shopProductTypes = Array.isArray(data.productTypes) && data.productTypes.length
+          ? data.productTypes.map((t) => ({ id: String(t.id || '').trim(), label: String(t.label || '').trim() })).filter((t) => t.id && t.label)
+          : DEFAULT_SHOP_TYPES.map((t) => ({ ...t }));
+        renderShopTypesList();
         const introA = document.getElementById('shopIntroAdmin');
         const urlA = document.getElementById('shopUrlAdmin');
         const ctaA = document.getElementById('shopCtaLabelAdmin');
@@ -1260,6 +1557,18 @@
             if (block) moveShopProductBlock(block, moveBtn.getAttribute('data-shop-move'));
             return;
           }
+          const removeImageBtn = e.target.closest('[data-shop-image-remove]');
+          if (removeImageBtn) {
+            const block = removeImageBtn.closest('.shop-product-block');
+            if (!block) return;
+            const index = Number(removeImageBtn.getAttribute('data-shop-image-remove'));
+            const images = normalizeShopImages({ images: JSON.parse(block.dataset.images || '[]') });
+            if (!Number.isNaN(index)) images.splice(index, 1);
+            block.dataset.images = JSON.stringify(images);
+            renderShopImagesGrid(block);
+            updateDashboardShopStats();
+            return;
+          }
           const btn = e.target.closest('[data-shop-remove]');
           if (!btn) return;
           const block = btn.closest('.shop-product-block');
@@ -1270,6 +1579,30 @@
           updateDashboardShopStats();
         });
       }
+
+      document.getElementById('shopTypeAddBtn')?.addEventListener('click', () => {
+        const input = document.getElementById('shopTypeLabelInput');
+        const label = String(input?.value || '').trim();
+        if (!label) return;
+        let id = slugifyShopType(label);
+        const existing = new Set(shopProductTypes.map((t) => t.id));
+        if (existing.has(id)) id = id + '-' + Date.now().toString(36).slice(-3);
+        shopProductTypes.push({ id, label });
+        if (input) input.value = '';
+        renderShopTypesList();
+      });
+
+      document.getElementById('shopTypesList')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-shop-type-remove]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-shop-type-remove');
+        if (shopProductTypes.length <= 1) {
+          alert('Il faut au moins un type de produit.');
+          return;
+        }
+        shopProductTypes = shopProductTypes.filter((t) => t.id !== id);
+        renderShopTypesList();
+      });
 
       document.getElementById('shopAddProduct')?.addEventListener('click', function () {
         const container = document.getElementById('shopProductsAdmin');

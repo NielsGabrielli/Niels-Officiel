@@ -1,9 +1,16 @@
 {
-  "version": 3,
+  "version": 4,
   "intro": "",
   "shopUrl": "",
   "shopCtaLabel": "Toute la boutique",
   "cmsCtaLabel": "Voir la fiche produit",
+  "productTypes": [
+    { "id": "vetement", "label": "Vêtement" },
+    { "id": "musique", "label": "Musique" },
+    { "id": "affiche", "label": "Affiche" },
+    { "id": "accessoire", "label": "Accessoire" },
+    { "id": "autre", "label": "Autre" }
+  ],
   "products": [
     {
       "id": "p1",
@@ -11,7 +18,9 @@
       "description": "Coupe unisexe — sérigraphie terracotta.",
       "detail": "Coton bio, coupe confortable, logo sérigraphié couleur terracotta. Lavage 30° à l’envers.",
       "price": "32 €",
+      "type": "vetement",
       "image": "assets/shop/product-tshirt.svg",
+      "images": ["assets/shop/product-tshirt.svg"],
       "cmsPageUrl": "/produit/t-shirt-niels",
       "published": true
     },
@@ -21,7 +30,9 @@
       "description": "Édition limitée — insert paroles.",
       "detail": "Disque ou CD selon disponibilité, jaquette carton, insert avec paroles.",
       "price": "À partir de 18 €",
+      "type": "musique",
       "image": "assets/shop/product-vinyl.svg",
+      "images": ["assets/shop/product-vinyl.svg"],
       "cmsPageUrl": "/produit/vinyle-cd",
       "published": true
     },
@@ -31,7 +42,9 @@
       "description": "Papier crème — noir profond.",
       "detail": "Format A2, impression offset, papier crème texturé.",
       "price": "15 €",
+      "type": "affiche",
       "image": "assets/shop/product-poster.svg",
+      "images": ["assets/shop/product-poster.svg"],
       "cmsPageUrl": "/produit/affiche-tournee",
       "published": true
     }

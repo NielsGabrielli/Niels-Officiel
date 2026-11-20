@@ -690,6 +690,13 @@ async function wireConcerts() {
   }
 }
 
+function shopPrimaryImage(product) {
+  const images = Array.isArray(product?.images)
+    ? product.images.map((u) => String(u || "").trim()).filter(Boolean)
+    : [];
+  return images[0] || String(product?.image || "").trim();
+}
+
 async function loadShopData() {
   const preview = new URLSearchParams(window.location.search).has("preview");
 
@@ -701,8 +708,18 @@ async function loadShopData() {
         if (parsed && typeof parsed === "object" && Array.isArray(parsed.products)) return parsed;
       }
     } catch {
-      /* JSON public par défaut */
+      /* source publiée par défaut */
     }
+  }
+
+  try {
+    const apiRes = await fetch("/api/shop", { cache: "no-store" });
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      if (data && Array.isArray(data.products)) return data;
+    }
+  } catch {
+    /* fallback fichier statique */
   }
 
   const res = await fetch("./assets/shop.json", { cache: "no-store" });
@@ -743,12 +760,12 @@ function buildProductCardHtml(p) {
   const desc = escapeHtml(p.description || "");
   const priceRaw = String(p.price || "").trim();
   const priceHtml = priceRaw ? `<p class="product__price">${escapeHtml(priceRaw)}</p>` : "";
-  const imgPath = String(p.image || "").trim();
+  const imgPath = shopPrimaryImage(p);
   const imgAlt = escapeAttr(String(p.title || "Produit"));
   const imgHtml = imgPath
     ? `<img src="${escapeAttr(imgPath)}" alt="${imgAlt}" width="800" height="600" loading="lazy" decoding="async" />`
     : "";
-  return `<article class="product">
+  return `<article class="product"${p.type ? ` data-product-type="${escapeAttr(String(p.type))}"` : ""}>
   <button type="button" class="product-card__open" data-product-id="${id}" aria-haspopup="dialog" aria-label="${escapeAttr(`Détails — ${p.title || "Produit"}`)}">
     <div class="product__img">${imgHtml}</div>
     <div class="product__info">
@@ -883,7 +900,7 @@ function openShopModal(product) {
   const desc = String(product.description || "");
   const detail = String(product.detail || "").trim();
   const price = String(product.price || "").trim();
-  const imgPath = String(product.image || "").trim();
+  const imgPath = shopPrimaryImage(product);
   const cmsUrl = String(product.cmsPageUrl || "").trim();
 
   if (titleEl) titleEl.textContent = title;
