@@ -551,7 +551,23 @@ function sortConcertsForDisplay(items) {
   });
 }
 
+function formatConcertTimeDisplay(time) {
+  const raw = String(time || "").trim();
+  if (!raw) return "";
+  const hm = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (hm) {
+    return `${parseInt(hm[1], 10)}h${hm[2]}`;
+  }
+  const fr = raw.match(/^(\d{1,2})\s*[hH]\s*(\d{2})?$/);
+  if (fr) {
+    const minutes = fr[2] || "00";
+    return `${parseInt(fr[1], 10)}h${minutes}`;
+  }
+  return raw;
+}
+
 function formatConcertDateDisplay(c) {
+  let datePart = "";
   if (c.dateIso && /^\d{4}-\d{2}-\d{2}$/.test(c.dateIso)) {
     const d = new Date(`${c.dateIso}T12:00:00`);
     const long = new Intl.DateTimeFormat("fr-FR", {
@@ -560,10 +576,14 @@ function formatConcertDateDisplay(c) {
       month: "long",
       year: "numeric",
     }).format(d);
-    return long.charAt(0).toUpperCase() + long.slice(1);
+    datePart = long.charAt(0).toUpperCase() + long.slice(1);
+  } else {
+    const bits = [c.dateLabel, c.year].filter(Boolean);
+    datePart = bits.length ? bits.join(" · ") : "";
   }
-  const bits = [c.dateLabel, c.year].filter(Boolean);
-  return bits.length ? bits.join(" · ") : "—";
+  const timePart = formatConcertTimeDisplay(c.time);
+  if (datePart && timePart) return `${datePart} · ${timePart}`;
+  return datePart || timePart || "—";
 }
 
 async function loadConcertsData() {

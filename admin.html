@@ -387,6 +387,7 @@
           <thead>
             <tr>
               <th style="min-width: 160px;">Date (calendrier)</th>
+              <th style="min-width: 110px;">Horaire</th>
               <th>Lieu</th>
               <th>Type</th>
               <th>Lien réservation</th>
@@ -1258,12 +1259,32 @@
         return eventDay < today;
       }
 
+      function normalizeConcertTime(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        const hm = raw.match(/^(\d{1,2}):(\d{2})$/);
+        if (hm) {
+          const h = Math.min(23, Math.max(0, parseInt(hm[1], 10)));
+          const m = Math.min(59, Math.max(0, parseInt(hm[2], 10)));
+          return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+        const fr = raw.match(/^(\d{1,2})\s*[hH]\s*(\d{2})?$/);
+        if (fr) {
+          const h = Math.min(23, Math.max(0, parseInt(fr[1], 10)));
+          const m = fr[2] ? Math.min(59, Math.max(0, parseInt(fr[2], 10))) : 0;
+          return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+        return '';
+      }
+
       function concertsRowTemplate(row) {
         const tr = document.createElement('tr');
         tr.dataset.id = row.id || uid();
         const iso = row.dateIso && /^\d{4}-\d{2}-\d{2}$/.test(row.dateIso) ? row.dateIso : '';
+        const time = normalizeConcertTime(row.time);
         tr.innerHTML = `
           <td><input type="date" class="form-input" data-field="dateIso" value="${escapeHtmlAttr(iso)}" /></td>
+          <td><input type="time" class="form-input" data-field="time" value="${escapeHtmlAttr(time)}" step="300" title="Heure du spectacle" /></td>
           <td><input type="text" class="form-input" data-field="venue" value="${escapeHtmlAttr(row.venue || '')}" placeholder="Ville — lieu" /></td>
           <td><input type="text" class="form-input" data-field="type" value="${escapeHtmlAttr(row.type || '')}" placeholder="Concert" /></td>
           <td><input type="url" class="form-input" data-field="bookingUrl" value="${escapeHtmlAttr(row.bookingUrl || '')}" placeholder="https://…" /></td>
@@ -1334,7 +1355,7 @@
         tbody.innerHTML = '';
         const rows = Array.isArray(data.concerts) ? data.concerts : [];
         if (!rows.length) {
-          tbody.appendChild(concertsRowTemplate({ id: uid(), dateIso: '', venue: '', type: '', bookingUrl: '' }));
+          tbody.appendChild(concertsRowTemplate({ id: uid(), dateIso: '', time: '', venue: '', type: '', bookingUrl: '' }));
         } else {
           rows.forEach((r) => {
             const row = { ...r };
@@ -1362,11 +1383,12 @@
             };
             const id = tr.dataset.id || uid();
             const dateIso = get('dateIso');
+            const time = normalizeConcertTime(get('time'));
             const venue = get('venue');
             const type = get('type');
             const bookingUrl = get('bookingUrl');
-            if (!dateIso && !venue && !type && !bookingUrl) return;
-            concerts.push({ id, dateIso, dateLabel: '', venue, type, bookingUrl });
+            if (!dateIso && !time && !venue && !type && !bookingUrl) return;
+            concerts.push({ id, dateIso, time, dateLabel: '', venue, type, bookingUrl });
           });
         }
         return {
@@ -1383,7 +1405,7 @@
           if (iso && concertIsPastAdminIso(iso)) tr.remove();
         });
         if (!tbody.querySelectorAll('tr').length) {
-          tbody.appendChild(concertsRowTemplate({ id: uid(), dateIso: '', venue: '', type: '', bookingUrl: '' }));
+          tbody.appendChild(concertsRowTemplate({ id: uid(), dateIso: '', time: '', venue: '', type: '', bookingUrl: '' }));
         }
         refreshPastRowStyles();
       }
@@ -1431,7 +1453,7 @@
       const addBtn = document.getElementById('concertsAddRow');
       if (addBtn && tbody) {
         addBtn.addEventListener('click', () => {
-          tbody.appendChild(concertsRowTemplate({ id: uid(), dateIso: '', venue: '', type: '', bookingUrl: '' }));
+          tbody.appendChild(concertsRowTemplate({ id: uid(), dateIso: '', time: '', venue: '', type: '', bookingUrl: '' }));
           refreshPastRowStyles();
         });
       }
@@ -1443,7 +1465,7 @@
           const tr = btn.closest('tr');
           if (tr) tr.remove();
           if (!tbody.querySelectorAll('tr').length) {
-            tbody.appendChild(concertsRowTemplate({ id: uid(), dateIso: '', venue: '', type: '', bookingUrl: '' }));
+            tbody.appendChild(concertsRowTemplate({ id: uid(), dateIso: '', time: '', venue: '', type: '', bookingUrl: '' }));
           }
           refreshPastRowStyles();
         });
