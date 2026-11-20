@@ -246,17 +246,19 @@ function emptyState() {
 }
 
 function hasBlob() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  // Nouveau flux Vercel : BLOB_STORE_ID + OIDC (VERCEL_OIDC_TOKEN auto).
+  // Ancien flux : BLOB_READ_WRITE_TOKEN.
+  return Boolean(
+    process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN
+  );
 }
 
 async function readBlobState() {
   if (!hasBlob()) return null;
   try {
     const { get } = require("@vercel/blob");
-    const result = await get(STATE_BLOB_PATH, {
-      access: "private",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
+    // Ne pas passer `token` : laisse le SDK utiliser OIDC + BLOB_STORE_ID.
+    const result = await get(STATE_BLOB_PATH, { access: "private" });
     if (!result || result.statusCode === 404 || !result.stream) {
       return emptyState();
     }
@@ -287,7 +289,6 @@ async function writeBlobState(state) {
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
-    token: process.env.BLOB_READ_WRITE_TOKEN,
   });
   return true;
 }

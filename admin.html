@@ -788,7 +788,7 @@
       if (hint) {
         hint.textContent = adminBlobReady
           ? 'Stockage Blob Vercel détecté : changement de mot de passe actif.'
-          : 'Pour changer le mot de passe : Vercel → Storage → Create Blob Store (le token BLOB_READ_WRITE_TOKEN est ajouté auto). Puis redeploy.';
+          : 'Blob non détecté. Dans Vercel → Storage → votre Blob → Connect Project → choisissez niels-officiel (Production). Vérifiez aussi BLOB_STORE_ID dans Environment Variables, puis Redeploy.';
       }
 
       const pwdForm = document.getElementById('securityPasswordForm');
@@ -865,7 +865,7 @@
           if (hint) {
             hint.textContent = adminBlobReady
               ? 'Stockage Blob Vercel détecté : changement de mot de passe actif.'
-              : 'Pour changer le mot de passe : Vercel → Storage → Create Blob Store (le token BLOB_READ_WRITE_TOKEN est ajouté auto). Puis redeploy.';
+              : 'Blob non détecté. Dans Vercel → Storage → votre Blob → Connect Project → choisissez niels-officiel (Production). Vérifiez aussi BLOB_STORE_ID dans Environment Variables, puis Redeploy.';
           }
         }
       }).catch(() => {});
