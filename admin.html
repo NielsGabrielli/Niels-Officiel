@@ -232,7 +232,7 @@
             <label class="form-label" for="authPassword">Mot de passe</label>
             <div class="password-field">
               <input class="form-input" type="password" id="authPassword" name="password" autocomplete="current-password" required />
-              <button type="button" class="password-toggle" id="authPasswordToggle" aria-pressed="false" aria-label="Afficher le mot de passe">Voir</button>
+              <button type="button" class="password-toggle" id="authPasswordToggle" data-password-toggle="authPassword" aria-pressed="false" aria-label="Afficher le mot de passe">Voir</button>
             </div>
           </div>
           <button type="submit" class="btn-save" id="authLoginBtn" style="width:100%;">Continuer</button>
@@ -500,15 +500,24 @@
         <form id="securityPasswordForm">
           <div class="form-group">
             <label class="form-label" for="securityCurrentPassword">Mot de passe actuel</label>
-            <input class="form-input" type="password" id="securityCurrentPassword" autocomplete="current-password" required />
+            <div class="password-field">
+              <input class="form-input" type="password" id="securityCurrentPassword" autocomplete="current-password" required />
+              <button type="button" class="password-toggle" data-password-toggle="securityCurrentPassword" aria-pressed="false" aria-label="Afficher le mot de passe">Voir</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="securityNewPassword">Nouveau mot de passe</label>
-            <input class="form-input" type="password" id="securityNewPassword" autocomplete="new-password" minlength="8" required />
+            <div class="password-field">
+              <input class="form-input" type="password" id="securityNewPassword" autocomplete="new-password" minlength="8" required />
+              <button type="button" class="password-toggle" data-password-toggle="securityNewPassword" aria-pressed="false" aria-label="Afficher le mot de passe">Voir</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="securityNewPassword2">Confirmer le nouveau mot de passe</label>
-            <input class="form-input" type="password" id="securityNewPassword2" autocomplete="new-password" minlength="8" required />
+            <div class="password-field">
+              <input class="form-input" type="password" id="securityNewPassword2" autocomplete="new-password" minlength="8" required />
+              <button type="button" class="password-toggle" data-password-toggle="securityNewPassword2" aria-pressed="false" aria-label="Afficher le mot de passe">Voir</button>
+            </div>
           </div>
           <button type="submit" class="btn-save" id="securityPasswordBtn">Enregistrer le mot de passe</button>
         </form>
@@ -686,17 +695,21 @@
       const totpForm = document.getElementById('authTotpForm');
       const backBtn = document.getElementById('authTotpBack');
       const logoutBtn = document.getElementById('adminLogoutBtn');
-      const passwordInput = document.getElementById('authPassword');
-      const passwordToggle = document.getElementById('authPasswordToggle');
+      function wirePasswordToggle(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+          const inputId = btn.getAttribute('data-password-toggle') || btn.previousElementSibling?.id;
+          const input = inputId ? document.getElementById(inputId) : btn.parentElement?.querySelector('input');
+          if (!input) return;
+          const show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          btn.textContent = show ? 'Masquer' : 'Voir';
+          btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+          btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+        });
+      }
 
-      passwordToggle?.addEventListener('click', () => {
-        if (!passwordInput) return;
-        const show = passwordInput.type === 'password';
-        passwordInput.type = show ? 'text' : 'password';
-        passwordToggle.textContent = show ? 'Masquer' : 'Voir';
-        passwordToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
-        passwordToggle.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
-      });
+      document.querySelectorAll('[data-password-toggle]').forEach(wirePasswordToggle);
 
       loginForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
