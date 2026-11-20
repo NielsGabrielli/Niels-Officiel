@@ -498,7 +498,7 @@ a{color:inherit}
 }
 
 .section--concerts .container--concerts{
-  max-width: min(720px, calc(100% - 48px));
+  max-width: min(960px, calc(100% - 48px));
   margin-inline: auto;
 }
 .section--concerts .section__head--center{
@@ -521,7 +521,7 @@ a{color:inherit}
 }
 .section--concerts .concert-card{
   width: 100%;
-  max-width: 640px;
+  max-width: 880px;
 }
 
 .section__head{
@@ -1034,10 +1034,10 @@ a{color:inherit}
 }
 .concert-card{
   display: grid;
-  grid-template-columns: minmax(160px, 1.2fr) minmax(0, 1fr) auto;
-  gap: 18px;
+  grid-template-columns: minmax(280px, 1.6fr) minmax(0, 0.7fr) auto;
+  gap: 22px;
   align-items: center;
-  padding: 20px 22px 20px 26px;
+  padding: 22px 28px 22px 28px;
   border-radius: var(--radius);
   border: 1px solid rgba(229,210,187,.14);
   background: linear-gradient(145deg, rgba(0,0,0,.42), rgba(19,19,19,.55));
@@ -1065,13 +1065,17 @@ a{color:inherit}
   font-size: clamp(17px, 1.85vw, 22px);
   color: rgba(229,210,187,.96);
   letter-spacing: .02em;
-  line-height: 1.15;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 .concert-card__venue{
   margin: 0;
   font-size: 14px;
   color: rgba(255,255,255,.88);
   line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .concert-card__type{
   margin: 0;
@@ -1107,6 +1111,10 @@ a{color:inherit}
     grid-template-columns: 1fr;
     gap: 14px;
     padding-left: 22px;
+  }
+  .concert-card__date,
+  .concert-card__venue{
+    white-space: normal;
   }
   .concert-card__cta{
     justify-self: stretch;
