@@ -913,14 +913,30 @@ function productIsBuyable(product) {
 
 function productAvailabilityLabel(product) {
   const value = productAvailabilityValue(product);
-  if (!value) return null;
+  const stock = productStockValue(product);
+  const showStock = product?.showStock === true && stock != null;
+  const stockSuffix =
+    showStock
+      ? stock === 1
+        ? " — 1 en stock"
+        : ` — ${stock} en stock`
+      : "";
+
+  if (!value) {
+    if (!showStock) return null;
+    return {
+      text: stock <= 0 ? "Rupture de stock" : `${stock} en stock`,
+      available: stock > 0,
+    };
+  }
+
   switch (value) {
     case "disponible":
-      return { text: "Disponible", available: true };
+      return { text: `Disponible${stockSuffix}`, available: true };
     case "precommande":
-      return { text: "Pré-vente", available: true };
+      return { text: `Pré-vente${stockSuffix}`, available: true };
     case "bientot":
-      return { text: "Bientôt disponible", available: false };
+      return { text: `Bientôt disponible${stockSuffix}`, available: false };
     case "rupture":
       return { text: "Rupture de stock", available: false };
     default:

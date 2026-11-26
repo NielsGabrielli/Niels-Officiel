@@ -787,6 +787,10 @@
             <input type="checkbox" id="shopModalBuyEnabled" />
             Achetable (Stripe)
           </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,.75); margin:0;">
+            <input type="checkbox" id="shopModalShowStock" />
+            Afficher le stock sur la fiche
+          </label>
         </div>
         <div class="form-group">
           <label class="form-label">Images</label>
@@ -1345,6 +1349,7 @@
           priceCents: Number.isFinite(priceCentsRaw) && priceCentsRaw > 0 ? Math.round(priceCentsRaw) : null,
           currency: String(row?.currency || 'eur').trim().toLowerCase() || 'eur',
           stock: normalizeShopStock(row?.stock),
+          showStock: row?.showStock === true,
           availability: normalizeShopAvailability(row?.availability),
           buyEnabled: row?.buyEnabled === true,
           type: String(row?.type || 'autre').trim() || 'autre',
@@ -1588,7 +1593,7 @@
                     : ''}
                   ${p.stock == null
                     ? ''
-                    : `<span class="shop-status-pill">Stock ${escapeHtmlText(String(p.stock))}</span>`}
+                    : `<span class="shop-status-pill">Stock ${escapeHtmlText(String(p.stock))}${p.showStock ? ' · visible' : ''}</span>`}
                 </div>
                 <p class="shop-product-card__price">${escapeHtmlText(p.price || '—')}</p>
                 <div class="shop-product-card__actions">
@@ -1683,6 +1688,7 @@
         document.getElementById('shopModalCmsPageUrl').value = product.cmsPageUrl;
         document.getElementById('shopModalPublished').checked = product.published !== false;
         document.getElementById('shopModalBuyEnabled').checked = product.buyEnabled === true;
+        document.getElementById('shopModalShowStock').checked = product.showStock === true;
         fillShopModalTypeSelect(product.type);
         shopModalImages = product.images.slice();
         renderShopModalImages();
@@ -1709,6 +1715,7 @@
           priceCents: Number.isFinite(priceCents) && priceCents > 0 ? Math.round(priceCents) : null,
           currency: document.getElementById('shopModalCurrency')?.value || 'eur',
           stock: document.getElementById('shopModalStock')?.value,
+          showStock: document.getElementById('shopModalShowStock')?.checked === true,
           availability: document.getElementById('shopModalAvailability')?.value || '',
           type: document.getElementById('shopModalType')?.value || 'autre',
           cmsPageUrl: document.getElementById('shopModalCmsPageUrl')?.value,

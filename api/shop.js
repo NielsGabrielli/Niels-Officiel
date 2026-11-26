@@ -177,6 +177,7 @@ function normalizeProduct(p) {
     priceCents,
     currency: String(p.currency || "eur").trim().toLowerCase() || "eur",
     stock,
+    showStock: p.showStock === true,
     availability,
     buyEnabled: p.buyEnabled === true,
     type: String(p.type || "autre").trim() || "autre",
