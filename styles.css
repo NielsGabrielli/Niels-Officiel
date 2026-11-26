@@ -1128,11 +1128,12 @@ a{color:inherit}
 /* Products (cartes format portrait, taille uniforme) */
 #shop .products{
   display:grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
   gap: 16px;
-  max-width: 792px;
+  max-width: 840px;
   margin-inline: auto;
   width: 100%;
+  justify-content: center;
   align-items: stretch;
   box-sizing: border-box;
 }
@@ -1179,10 +1180,10 @@ a{color:inherit}
 .product-card__open:focus-visible{
   outline: none;
 }
-/* Format visuel type 1080×1350 (4:5) — portrait « feed » */
+/* Format carré pour les visuels boutique */
 .product__img{
   flex: 0 0 auto;
-  aspect-ratio: 1080 / 1350;
+  aspect-ratio: 1 / 1;
   width: 100%;
   min-height: 0;
   background:
@@ -1309,7 +1310,7 @@ body.shop-modal-open{
 }
 .shop-modal__media{
   position: relative;
-  aspect-ratio: 1080 / 1350;
+  aspect-ratio: 1 / 1;
   min-height: 0;
   width: 100%;
   background:
@@ -1976,8 +1977,8 @@ body.newsletter-popup-open{
   .salon{grid-template-columns: 1fr}
   .discography__grid{grid-template-columns: 1fr}
   #shop .products{
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: 528px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 240px));
+    max-width: 560px;
     gap: 16px;
   }
   .split{grid-template-columns: 1fr}
@@ -2077,8 +2078,8 @@ body.newsletter-popup-open{
 
 @media (max-width: 600px){
   #shop .products{
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 304px;
+    grid-template-columns: minmax(0, 260px);
+    max-width: 280px;
   }
 }
 
