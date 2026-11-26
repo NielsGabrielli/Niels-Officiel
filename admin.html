@@ -1429,8 +1429,8 @@
               <div class="order-card__actions">
                 <button type="button" class="btn-save" data-order-save>Enregistrer</button>
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:rgba(255,255,255,.65); margin:0;">
-                  <input type="checkbox" data-order-notify ${o.status === 'shipped' ? '' : 'checked'} />
-                  Notifier le client (si expédiée)
+                  <input type="checkbox" data-order-notify checked />
+                  Envoyer l’e-mail d’expédition au client
                 </label>
               </div>
             </div>
@@ -1496,13 +1496,9 @@
           const idx = ordersState.findIndex((o) => o.id === id);
           if (idx >= 0) ordersState[idx] = data.order;
           renderOrdersAdmin();
-          if (hint) {
-            const mailNote = data.email?.sent
-              ? ' Client notifié.'
-              : (notifyCustomer && status === 'shipped'
-                ? ' (e-mail client non envoyé : configurez BREVO_API_KEY pour les mails de suivi).'
-                : '');
-            hint.textContent = `Commande mise à jour.${mailNote}`;
+          if (hint) hint.textContent = data.message || 'Commande mise à jour.';
+          if (notifyCustomer && status === 'shipped' && data.email && !data.email.sent) {
+            alert(data.message || `E-mail d’expédition non envoyé (${data.email.reason || 'erreur'}).`);
           }
         } catch (_) {
           alert('Impossible de joindre le serveur.');

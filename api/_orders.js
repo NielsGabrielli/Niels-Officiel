@@ -316,14 +316,23 @@ function emailDetailRow(label, valueHtml) {
   </p>`;
 }
 
-async function sendOrderPaidEmails(order) {
-  const notify = String(
-    process.env.ORDER_NOTIFY_EMAIL || process.env.CONTACT_EMAIL || ""
-  ).trim();
+async function sendOrderPaidEmails(order, options = {}) {
+  const skipMerchant = options.skipMerchant === true;
+  const subjectPrefix = options.subjectPrefix
+    ? String(options.subjectPrefix)
+    : "";
+  const notify = skipMerchant
+    ? ""
+    : String(
+        process.env.ORDER_NOTIFY_EMAIL ||
+          process.env.CONTACT_EMAIL ||
+          "contact@niels-officiel.fr"
+      ).trim();
   const money = formatMoney(order.amountTotal, order.currency);
   const shipText = formatShipping(order.shipping);
   const shipHtml = escapeHtml(shipText).replace(/\n/g, "<br/>");
   const base = siteBaseUrl();
+  const results = { customer: null, merchant: null };
 
   if (order.email) {
     const rowsHtml = [
@@ -335,9 +344,9 @@ async function sendOrderPaidEmails(order) {
         : "",
     ].join("");
 
-    await sendOrderEmail({
+    results.customer = await sendOrderEmail({
       to: order.email,
-      subject: `Confirmation de commande — ${order.productTitle}`,
+      subject: `${subjectPrefix}Confirmation de commande — ${order.productTitle}`,
       text: [
         `Merci pour votre commande !`,
         ``,
@@ -381,9 +390,9 @@ async function sendOrderPaidEmails(order) {
       order.id ? emailDetailRow("Référence", escapeHtml(order.id)) : "",
     ].join("");
 
-    await sendOrderEmail({
+    results.merchant = await sendOrderEmail({
       to: notify,
-      subject: `Nouvelle commande — ${order.productTitle}`,
+      subject: `${subjectPrefix}Nouvelle commande — ${order.productTitle}`,
       text: [
         `Nouvelle commande boutique`,
         `Produit : ${order.productTitle}`,
@@ -400,28 +409,37 @@ async function sendOrderPaidEmails(order) {
         title: "Nouvelle commande",
         intro: "Une commande vient d’être payée sur la boutique.",
         rowsHtml,
-        noteHtml: "",
+        noteHtml: "Ouvre l’admin pour préparer l’expédition et ajouter le suivi.",
         cta: { href: `${base}/admin`, label: "Voir l’admin" },
       }),
     });
   }
+
+  return results;
 }
 
-async function sendOrderShippedEmail(order) {
+async function sendOrderShippedEmail(order, options = {}) {
   if (!order?.email) return { sent: false, reason: "no_email" };
+  const subjectPrefix = options.subjectPrefix
+    ? String(options.subjectPrefix)
+    : "";
   const base = siteBaseUrl();
-  const trackingText =
-    order.trackingUrl ||
-    (order.trackingNumber ? `N° de suivi : ${order.trackingNumber}` : "");
-  const trackingHtml = order.trackingUrl
-    ? `<a href="${escapeAttr(order.trackingUrl)}" style="color:#D05033;text-decoration:none;font-weight:700;">Suivre mon colis</a>${
-        order.trackingNumber
-          ? `<br/><span style="color:rgba(255,255,255,0.75);">N° ${escapeHtml(order.trackingNumber)}</span>`
-          : ""
-      }`
-    : order.trackingNumber
-      ? escapeHtml(order.trackingNumber)
-      : "";
+  const trackingText = [
+    order.trackingNumber ? `N° de suivi : ${order.trackingNumber}` : "",
+    order.trackingUrl ? `Lien : ${order.trackingUrl}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const trackingHtml = [
+    order.trackingNumber
+      ? `<strong style="color:#1a1a1a;">${escapeHtml(order.trackingNumber)}</strong>`
+      : "",
+    order.trackingUrl
+      ? `<a href="${escapeAttr(order.trackingUrl)}" style="color:#D05033;text-decoration:underline;font-weight:700;">Suivre mon colis</a>`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("<br/>");
 
   const rowsHtml = [
     emailDetailRow("Produit", escapeHtml(order.productTitle)),
@@ -430,7 +448,7 @@ async function sendOrderShippedEmail(order) {
 
   return sendOrderEmail({
     to: order.email,
-    subject: `Votre commande a été expédiée — ${order.productTitle}`,
+    subject: `${subjectPrefix}Votre commande a été expédiée — ${order.productTitle}`,
     text: [
       `Bonne nouvelle : votre commande a été expédiée.`,
       ``,
@@ -447,7 +465,8 @@ async function sendOrderShippedEmail(order) {
       intro:
         "Bonne nouvelle : votre colis est en route. Merci pour votre confiance.",
       rowsHtml,
-      noteHtml: "Conservez cet e-mail pour suivre l’acheminement de votre commande.",
+      noteHtml:
+        "Conservez cet e-mail pour suivre l’acheminement de votre commande.",
       cta: order.trackingUrl
         ? { href: order.trackingUrl, label: "Suivre mon colis" }
         : { href: base, label: "Retour au site" },

@@ -182,7 +182,17 @@ module.exports = async function handler(req, res) {
       email = await sendOrderShippedEmail(next);
     }
 
-    json(res, 200, { ok: true, order: next, email });
+    json(res, 200, {
+      ok: true,
+      order: next,
+      email,
+      message:
+        email && email.sent
+          ? "Commande enregistrée. E-mail d’expédition envoyé."
+          : email && email.reason === "skipped"
+            ? "Commande enregistrée."
+            : `Commande enregistrée. E-mail d’expédition non envoyé (${email?.reason || "erreur"}).`,
+    });
     return;
   }
 
@@ -193,8 +203,8 @@ module.exports = async function handler(req, res) {
       return;
     }
     const sampleOrder = normalizeOrder({
-      id: "ord_preview_demo",
-      stripeSessionId: "cs_test_preview",
+      id: `ord_preview_${Date.now()}`,
+      stripeSessionId: `cs_test_preview_${Date.now()}`,
       productId: "p-cd-live",
       productTitle: "CD - Live Session 2025",
       amountTotal: 1200,
@@ -217,29 +227,24 @@ module.exports = async function handler(req, res) {
       updatedAt: new Date().toISOString(),
     });
 
-    // Ne pas spammer ORDER_NOTIFY_EMAIL pendant un aperçu.
-    const prevNotify = process.env.ORDER_NOTIFY_EMAIL;
-    const prevContact = process.env.CONTACT_EMAIL;
-    process.env.ORDER_NOTIFY_EMAIL = "";
-    process.env.CONTACT_EMAIL = "";
-    try {
-      await sendOrderPaidEmails(sampleOrder);
-      const shipped = await sendOrderShippedEmail({
-        ...sampleOrder,
-        status: "shipped",
-      });
-      json(res, 200, {
-        ok: true,
-        to,
-        shipped,
-        message: `Aperçus envoyés à ${to} (confirmation + expédition).`,
-      });
-    } finally {
-      if (prevNotify != null) process.env.ORDER_NOTIFY_EMAIL = prevNotify;
-      else delete process.env.ORDER_NOTIFY_EMAIL;
-      if (prevContact != null) process.env.CONTACT_EMAIL = prevContact;
-      else delete process.env.CONTACT_EMAIL;
-    }
+    const paid = await sendOrderPaidEmails(sampleOrder, {
+      skipMerchant: true,
+      subjectPrefix: "[Aperçu] ",
+    });
+    const shipped = await sendOrderShippedEmail(
+      { ...sampleOrder, status: "shipped" },
+      { subjectPrefix: "[Aperçu] " }
+    );
+
+    const okCustomer = paid?.customer?.sent === true;
+    const okShipped = shipped?.sent === true;
+    json(res, okCustomer || okShipped ? 200 : 500, {
+      ok: okCustomer || okShipped,
+      to,
+      paid,
+      shipped,
+      message: `Aperçus → confirmation: ${okCustomer ? "OK" : paid?.customer?.reason || "échec"} · expédition: ${okShipped ? "OK" : shipped?.reason || "échec"}`,
+    });
     return;
   }
 
