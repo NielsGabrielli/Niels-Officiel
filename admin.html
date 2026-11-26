@@ -777,9 +777,10 @@
         <div class="form-group">
           <label class="form-label">Images</label>
           <div class="shop-images-dropzone" id="shopModalDropzone">
-            <p>Glissez-déposez ou cliquez pour téléverser<br />JPG, PNG, WebP — max 3,5&nbsp;Mo · 1ʳᵉ = couverture</p>
-            <input type="file" accept="image/*" multiple id="shopModalFileInput" />
+            <p>Glissez-déposez ou cliquez pour téléverser<br />JPG, PNG, WebP · 1ʳᵉ = couverture · compressé auto</p>
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" multiple id="shopModalFileInput" />
           </div>
+          <p id="shopModalUploadHint" style="margin:8px 0 0; font-size:12px; color:rgba(255,255,255,.5); min-height:1.2em;"></p>
           <div class="shop-images-grid" id="shopModalImagesGrid"></div>
         </div>
         <div class="shop-admin-modal__footer">
@@ -1374,53 +1375,128 @@
         });
       }
 
+      function setShopModalUploadHint(text, isError) {
+        const hint = document.getElementById('shopModalUploadHint');
+        const saveHint = document.getElementById('shopSaveHint');
+        if (hint) {
+          hint.textContent = text || '';
+          hint.style.color = isError ? 'rgba(255,120,120,.95)' : 'rgba(255,255,255,.5)';
+        }
+        if (saveHint) saveHint.textContent = text || '';
+      }
+
+      async function prepareShopImageFile(file) {
+        const name = String(file?.name || 'image.jpg');
+        const type = String(file?.type || '');
+        if (/heic|heif/i.test(type) || /\.heic$/i.test(name) || /\.heif$/i.test(name)) {
+          const err = new Error('unsupported_heic');
+          err.payload = { message: 'Format HEIC non supporté. Exportez en JPG depuis Photos.' };
+          throw err;
+        }
+        if (!/^image\/(jpeg|jpg|png|webp|gif)$/i.test(type)) {
+          const err = new Error('invalid_type');
+          err.payload = { message: 'Type d’image non supporté (JPG, PNG ou WebP).' };
+          throw err;
+        }
+
+        const MAX_EDGE = 1600;
+        const TARGET_BYTES = 1.8 * 1024 * 1024;
+        const softOk = file.size <= TARGET_BYTES && /^image\/(jpeg|jpg|webp)$/i.test(type);
+        if (softOk) return file;
+
+        let bitmap;
+        try {
+          bitmap = await createImageBitmap(file);
+        } catch {
+          return file;
+        }
+        const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+        const w = Math.max(1, Math.round(bitmap.width * scale));
+        const h = Math.max(1, Math.round(bitmap.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          bitmap.close();
+          return file;
+        }
+        ctx.drawImage(bitmap, 0, 0, w, h);
+        bitmap.close();
+
+        let quality = 0.82;
+        let blob = null;
+        for (let i = 0; i < 4; i += 1) {
+          blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+          if (!blob) break;
+          if (blob.size <= TARGET_BYTES) break;
+          quality -= 0.12;
+        }
+        if (!blob || !blob.size) return file;
+        const outName = name.replace(/\.[a-z0-9]+$/i, '') + '.jpg';
+        return new File([blob], outName, { type: 'image/jpeg', lastModified: Date.now() });
+      }
+
       async function uploadShopImageFile(file) {
-        const dataBase64 = await fileToBase64(file);
+        const prepared = await prepareShopImageFile(file);
+        const dataBase64 = await fileToBase64(prepared);
         const res = await fetch('/api/shop', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
           body: JSON.stringify({
             action: 'uploadImage',
-            fileName: file.name || 'image.jpg',
-            contentType: file.type || 'image/jpeg',
+            fileName: prepared.name || 'image.jpg',
+            contentType: prepared.type || 'image/jpeg',
             dataBase64,
           }),
         });
         let data = {};
         try { data = await res.json(); } catch (_) {}
         if (!res.ok || !data.ok || !data.url) {
-          const err = new Error(data.error || 'upload_failed');
+          const err = new Error(data.error || (res.status === 413 ? 'payload_too_large' : 'upload_failed'));
           err.payload = data;
+          err.status = res.status;
           throw err;
         }
         return data.url;
       }
 
       async function addImagesToShopModal(files) {
-        const list = [...files].filter((f) => f && /^image\//i.test(f.type));
-        if (!list.length) return;
-        const hint = document.getElementById('shopSaveHint');
+        const list = [...files].filter((f) => f && (/^image\//i.test(f.type) || /\.(jpe?g|png|webp|gif)$/i.test(f.name || '')));
+        if (!list.length) {
+          setShopModalUploadHint('Choisissez une image JPG, PNG ou WebP.', true);
+          return;
+        }
         for (const file of list) {
           try {
-            if (hint) hint.textContent = `Téléversement de ${file.name}…`;
+            setShopModalUploadHint(`Téléversement de ${file.name}…`);
             const url = await uploadShopImageFile(file);
             shopModalImages.push(url);
             renderShopModalImages();
+            setShopModalUploadHint('Image ajoutée.');
           } catch (err) {
+            const code = err?.message || '';
             const msg = err?.payload?.message
-              || (err?.message === 'blob_required' ? 'Blob Store Vercel requis pour téléverser.' : null)
-              || (err?.message === 'file_too_large' ? 'Image trop lourde (max ~3,5 Mo).' : null)
+              || (code === 'blob_required' ? 'Blob Store Vercel requis pour téléverser.' : null)
+              || (code === 'file_too_large' || code === 'payload_too_large' || err?.status === 413
+                ? 'Image trop lourde même après compression. Essayez un JPG plus léger.'
+                : null)
+              || (code === 'unauthorized' || err?.status === 401
+                ? 'Session expirée. Reconnectez-vous puis réessayez.'
+                : null)
+              || (code === 'unsupported_heic' ? 'Format HEIC non supporté. Exportez en JPG.' : null)
               || `Échec du téléversement (${file.name}).`;
-            if (hint) hint.textContent = msg;
+            setShopModalUploadHint(msg, true);
             alert(msg);
           }
         }
-        if (hint) {
-          setTimeout(() => {
-            if (hint.textContent.includes('Téléversement')) hint.textContent = '';
-          }, 2500);
-        }
+        setTimeout(() => {
+          const hint = document.getElementById('shopModalUploadHint');
+          if (hint && /Téléversement|Image ajoutée/.test(hint.textContent || '')) {
+            setShopModalUploadHint('');
+          }
+        }, 2500);
       }
 
       function renderShopProductCards() {

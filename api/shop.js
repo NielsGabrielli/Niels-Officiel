@@ -345,6 +345,7 @@ module.exports = async function handler(req, res) {
       });
       json(res, 200, { ok: true, ...uploaded });
     } catch (err) {
+      console.error("shop uploadImage", err);
       const code = err && err.code ? err.code : "upload_failed";
       const status =
         code === "blob_required"
@@ -360,7 +361,11 @@ module.exports = async function handler(req, res) {
             ? "Blob Store Vercel requis pour téléverser des images."
             : code === "file_too_large"
               ? "Image trop lourde (max ~3,5 Mo)."
-              : undefined,
+              : code === "invalid_type"
+                ? "Type d’image non supporté (JPG, PNG ou WebP)."
+                : code === "empty_file"
+                  ? "Fichier image vide."
+                  : "Échec du téléversement. Réessayez avec un JPG plus léger.",
       });
     }
     return;
