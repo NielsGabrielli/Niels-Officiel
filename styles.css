@@ -1225,6 +1225,8 @@ a{color:inherit}
 .products__empty{
   margin: 0;
   grid-column: 1 / -1;
+  text-align: center;
+  width: 100%;
 }
 .shop-catalog-note{
   margin: 8px 0 0;
