@@ -145,12 +145,20 @@ function normalizeProduct(p) {
   const legacyImage = String(p.image || "").trim();
   if (legacyImage && !images.includes(legacyImage)) images.unshift(legacyImage);
   const image = images[0] || legacyImage || "";
+  const priceCentsRaw = Number(p.priceCents);
+  const priceCents =
+    Number.isFinite(priceCentsRaw) && priceCentsRaw > 0
+      ? Math.round(priceCentsRaw)
+      : null;
   return {
     id: String(p.id || "").trim() || `p_${Date.now()}`,
     title: String(p.title || "").trim(),
     description: String(p.description || "").trim(),
     detail: String(p.detail || "").trim(),
     price: String(p.price || "").trim(),
+    priceCents,
+    currency: String(p.currency || "eur").trim().toLowerCase() || "eur",
+    buyEnabled: p.buyEnabled === true,
     type: String(p.type || "autre").trim() || "autre",
     image,
     images,

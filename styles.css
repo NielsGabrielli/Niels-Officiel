@@ -1333,12 +1333,46 @@ body.shop-modal-open{
 .shop-modal__price{
   margin: 4px 0 8px !important;
 }
-.shop-modal__cms{
-  align-self: flex-start;
+.shop-modal__actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
   margin-top: 8px;
 }
-.shop-modal__cms[hidden]{
+.shop-modal__cms{
+  align-self: flex-start;
+}
+.shop-modal__cms[hidden],
+#shopModalBuy[hidden],
+.shop-modal__buy-hint[hidden]{
   display: none !important;
+}
+.shop-modal__buy-hint{
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+.shop-checkout-banner{
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 80;
+  max-width: min(520px, calc(100% - 32px));
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(20,20,20,.96);
+  border: 1px solid rgba(229,210,187,.2);
+  color: rgba(255,255,255,.9);
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45);
+}
+.shop-checkout-banner.is-success{
+  border-color: rgba(40,167,69,.45);
+}
+.shop-checkout-banner.is-cancel{
+  border-color: rgba(229,210,187,.28);
 }
 .shop-modal__close{
   position: absolute;

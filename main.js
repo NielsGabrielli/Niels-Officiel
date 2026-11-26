@@ -886,6 +886,65 @@ function renderShop(data) {
   mount.innerHTML = items.map((p) => buildProductCardHtml(p)).join("");
 }
 
+function productIsBuyable(product) {
+  if (!product || product.published === false || product.buyEnabled !== true) {
+    return false;
+  }
+  const cents = Number(product.priceCents);
+  return Number.isFinite(cents) && cents >= 50;
+}
+
+async function startShopCheckout(productId) {
+  const buyBtn = $("#shopModalBuy");
+  const hint = $("#shopModalBuyHint");
+  if (buyBtn) {
+    buyBtn.disabled = true;
+    buyBtn.textContent = "Redirection…";
+  }
+  if (hint) {
+    hint.textContent = "";
+    hint.setAttribute("hidden", "");
+  }
+  try {
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId }),
+    });
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      /* ignore */
+    }
+    if (!res.ok || !data.ok || !data.url) {
+      const msg =
+        data.message ||
+        (data.error === "stripe_not_configured"
+          ? "Paiement non configuré (clé Stripe manquante)."
+          : "Impossible de démarrer le paiement.");
+      if (hint) {
+        hint.textContent = msg;
+        hint.removeAttribute("hidden");
+      } else {
+        alert(msg);
+      }
+      return;
+    }
+    window.location.href = data.url;
+  } catch {
+    if (hint) {
+      hint.textContent = "Impossible de joindre le serveur de paiement.";
+      hint.removeAttribute("hidden");
+    }
+  } finally {
+    if (buyBtn) {
+      buyBtn.disabled = false;
+      buyBtn.textContent = "Acheter";
+    }
+  }
+}
+
 function openShopModal(product) {
   const modal = $("#shopModal");
   const titleEl = $("#shopModalTitle");
@@ -894,6 +953,8 @@ function openShopModal(product) {
   const priceEl = $("#shopModalPrice");
   const mediaEl = $("#shopModalMedia");
   const cmsBtn = $("#shopModalCms");
+  const buyBtn = $("#shopModalBuy");
+  const buyHint = $("#shopModalBuyHint");
   if (!modal || !product) return;
 
   const title = String(product.title || "Produit");
@@ -951,6 +1012,21 @@ function openShopModal(product) {
       cmsBtn.removeAttribute("href");
     }
   }
+  if (buyBtn) {
+    if (productIsBuyable(product)) {
+      buyBtn.dataset.productId = String(product.id || "");
+      buyBtn.textContent = "Acheter";
+      buyBtn.disabled = false;
+      buyBtn.removeAttribute("hidden");
+    } else {
+      buyBtn.setAttribute("hidden", "");
+      buyBtn.removeAttribute("data-product-id");
+    }
+  }
+  if (buyHint) {
+    buyHint.textContent = "";
+    buyHint.setAttribute("hidden", "");
+  }
 
   shopModalLastFocus = document.activeElement;
   modal.removeAttribute("hidden");
@@ -978,6 +1054,7 @@ let shopModalListenersBound = false;
 function wireShopModals() {
   const modal = $("#shopModal");
   const closeBtn = $("#shopModalClose");
+  const buyBtn = $("#shopModalBuy");
   if (!modal || shopModalListenersBound) return;
   shopModalListenersBound = true;
 
@@ -990,12 +1067,46 @@ function wireShopModals() {
     closeBtn.addEventListener("click", () => closeShopModal());
   }
 
+  if (buyBtn) {
+    buyBtn.addEventListener("click", () => {
+      const productId = buyBtn.dataset.productId;
+      if (productId) startShopCheckout(productId);
+    });
+  }
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal && !modal.hasAttribute("hidden")) {
       e.preventDefault();
       closeShopModal();
     }
   });
+}
+
+function showCheckoutBanner(kind) {
+  const existing = document.querySelector(".shop-checkout-banner");
+  if (existing) existing.remove();
+  const el = document.createElement("div");
+  el.className =
+    "shop-checkout-banner " + (kind === "success" ? "is-success" : "is-cancel");
+  el.setAttribute("role", "status");
+  el.textContent =
+    kind === "success"
+      ? "Paiement test réussi. Merci ! (mode Stripe test)"
+      : "Paiement annulé. Vous pouvez réessayer quand vous voulez.";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 7000);
+  const url = new URL(window.location.href);
+  url.searchParams.delete("checkout");
+  url.searchParams.delete("session_id");
+  window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+}
+
+function wireCheckoutReturnBanner() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get("checkout");
+  if (status === "success" || status === "cancel") {
+    showCheckoutBanner(status);
+  }
 }
 
 function wireShopProductButtons() {
@@ -1021,6 +1132,7 @@ async function wireShop() {
     renderShop(data);
     wireShopProductButtons();
     wireShopModals();
+    wireCheckoutReturnBanner();
   } catch {
     const mount = $("#shopProducts");
     if (mount) {

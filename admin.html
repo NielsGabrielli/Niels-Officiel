@@ -554,7 +554,7 @@
         <p style="font-size: 13px; color: rgba(255,255,255,.6); margin: -8px 0 20px; line-height: 1.55;">
           <strong>Publier la boutique</strong> met les produits en ligne immédiatement.
           Les <strong>types de produits</strong> serviront plus tard aux filtres de la page boutique.
-          Stripe sera branché dans un second temps.
+          Pour vendre&nbsp;: cochez <strong>Achetable (Stripe)</strong> et renseignez le prix en centimes (ex. 100 = 1&nbsp;€).
           <br /><br />
           <strong style="color: rgba(229,210,187,.85);">≤ 3 produits publiés</strong>&nbsp;: uniquement la section boutique sur l’accueil.
           <strong style="color: rgba(229,210,187,.85);">&gt; 3 produits</strong>&nbsp;: page <code style="font-size:12px;">/boutique</code>, lien navbar et bouton «&nbsp;Toute la boutique&nbsp;».
@@ -1291,9 +1291,27 @@
               <input type="text" class="form-input" data-field="price" value="${escapeHtmlAttr(row.price || '')}" placeholder="ex. 32 €" />
             </div>
             <div class="form-group">
-              <label class="form-label">URL page produit CMS (optionnel)</label>
-              <input type="text" class="form-input" data-field="cmsPageUrl" value="${escapeHtmlAttr(row.cmsPageUrl || '')}" placeholder="/produit/slug ou https://…" />
+              <label class="form-label">Prix Stripe (centimes)</label>
+              <input type="number" class="form-input" data-field="priceCents" min="50" step="1" value="${escapeHtmlAttr(row.priceCents != null ? row.priceCents : '')}" placeholder="ex. 3200 = 32,00 €" />
             </div>
+          </div>
+          <div class="shop-admin-grid">
+            <div class="form-group">
+              <label class="form-label">Devise</label>
+              <select class="form-input" data-field="currency">
+                <option value="eur" ${(row.currency || 'eur') === 'eur' ? 'selected' : ''}>EUR</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,.75); margin:0 0 10px;">
+                <input type="checkbox" data-field="buyEnabled" ${row.buyEnabled === true ? 'checked' : ''} />
+                Achetable (Stripe)
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">URL page produit CMS (optionnel)</label>
+            <input type="text" class="form-input" data-field="cmsPageUrl" value="${escapeHtmlAttr(row.cmsPageUrl || '')}" placeholder="/produit/slug ou https://…" />
           </div>
           <div class="form-group">
             <label class="form-label">Titre</label>
@@ -1355,12 +1373,17 @@
           const description = get('description');
           const detail = get('detail');
           const price = get('price');
+          const priceCentsRaw = get('priceCents');
+          const priceCents = priceCentsRaw ? Number(priceCentsRaw) : null;
+          const currency = get('currency') || 'eur';
           const type = get('type') || 'autre';
           const cmsPageUrl = get('cmsPageUrl');
           const images = normalizeShopImages({ images: JSON.parse(block.dataset.images || '[]') });
           const image = images[0] || '';
           const publishedEl = block.querySelector('[data-field="published"]');
           const published = publishedEl ? publishedEl.checked : true;
+          const buyEl = block.querySelector('[data-field="buyEnabled"]');
+          const buyEnabled = buyEl ? buyEl.checked : false;
           if (!title && !description && !detail && !price && !images.length && !cmsPageUrl) return;
           payload.products.push({
             id: pid,
@@ -1368,6 +1391,9 @@
             description,
             detail,
             price,
+            priceCents: Number.isFinite(priceCents) && priceCents > 0 ? Math.round(priceCents) : null,
+            currency,
+            buyEnabled,
             type,
             image,
             images,

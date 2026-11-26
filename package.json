@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@vercel/blob": "^2.9.0",
-    "otpauth": "^9.6.0"
+    "otpauth": "^9.6.0",
+    "stripe": "^23.2.0"
   }
 }
