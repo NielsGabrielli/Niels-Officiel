@@ -866,7 +866,10 @@
               Les commandes arrivent ici après un paiement Stripe réussi (webhook). Mets à jour le statut et le n° de suivi à l’expédition.
             </p>
           </div>
-          <button type="button" class="action-btn" id="ordersRefreshBtn">Actualiser</button>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <button type="button" class="action-btn" id="ordersRefreshBtn">Actualiser</button>
+            <button type="button" class="action-btn" id="ordersPreviewEmailBtn">Envoyer aperçus e-mail</button>
+          </div>
         </div>
         <p id="ordersHint" style="margin:14px 0 0; font-size:12px; color:rgba(255,255,255,.45);"></p>
         <div id="ordersList" class="orders-list" style="margin-top:18px;"></div>
@@ -1490,6 +1493,31 @@
       }
 
       document.getElementById('ordersRefreshBtn')?.addEventListener('click', loadOrdersAdmin);
+      document.getElementById('ordersPreviewEmailBtn')?.addEventListener('click', async () => {
+        const hint = document.getElementById('ordersHint');
+        const to = window.prompt('Envoyer les aperçus (confirmation + expédition) à :', 'koma.collectif@gmail.com');
+        if (!to) return;
+        if (hint) hint.textContent = `Envoi des aperçus à ${to}…`;
+        try {
+          const res = await fetch('/api/orders', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'previewEmails', to }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) {
+            alert(data.message || data.error || 'Envoi impossible.');
+            if (hint) hint.textContent = 'Échec envoi aperçus e-mail.';
+            return;
+          }
+          if (hint) hint.textContent = data.message || `Aperçus envoyés à ${to}.`;
+          alert(data.message || `Aperçus envoyés à ${to}.`);
+        } catch (_) {
+          alert('Impossible de joindre le serveur.');
+          if (hint) hint.textContent = 'Échec envoi aperçus e-mail.';
+        }
+      });
       document.getElementById('ordersList')?.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-order-save]');
         if (!btn) return;

@@ -5,6 +5,7 @@ const {
   writeOrdersBlob,
   normalizeOrder,
   sendOrderShippedEmail,
+  sendOrderPaidEmails,
 } = require("./_orders");
 
 const COOKIE_NAME = "niels_admin_session";
@@ -182,6 +183,63 @@ module.exports = async function handler(req, res) {
     }
 
     json(res, 200, { ok: true, order: next, email });
+    return;
+  }
+
+  if (action === "previewEmails") {
+    const to = String(body.to || "").trim();
+    if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      json(res, 400, { ok: false, error: "invalid_email" });
+      return;
+    }
+    const sampleOrder = normalizeOrder({
+      id: "ord_preview_demo",
+      stripeSessionId: "cs_test_preview",
+      productId: "p-cd-live",
+      productTitle: "CD - Live Session 2025",
+      amountTotal: 1200,
+      currency: "eur",
+      email: to,
+      name: "Franck Lecointe",
+      phone: "+33 6 00 00 00 00",
+      shipping: {
+        name: "Franck Lecointe",
+        line1: "14 Chemin de la Fontaine",
+        line2: "",
+        city: "Barbentane",
+        postalCode: "13570",
+        country: "FR",
+      },
+      status: "paid",
+      trackingNumber: "3S00000000000",
+      trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Ne pas spammer ORDER_NOTIFY_EMAIL pendant un aperçu.
+    const prevNotify = process.env.ORDER_NOTIFY_EMAIL;
+    const prevContact = process.env.CONTACT_EMAIL;
+    process.env.ORDER_NOTIFY_EMAIL = "";
+    process.env.CONTACT_EMAIL = "";
+    try {
+      await sendOrderPaidEmails(sampleOrder);
+      const shipped = await sendOrderShippedEmail({
+        ...sampleOrder,
+        status: "shipped",
+      });
+      json(res, 200, {
+        ok: true,
+        to,
+        shipped,
+        message: `Aperçus envoyés à ${to} (confirmation + expédition).`,
+      });
+    } finally {
+      if (prevNotify != null) process.env.ORDER_NOTIFY_EMAIL = prevNotify;
+      else delete process.env.ORDER_NOTIFY_EMAIL;
+      if (prevContact != null) process.env.CONTACT_EMAIL = prevContact;
+      else delete process.env.CONTACT_EMAIL;
+    }
     return;
   }
 
