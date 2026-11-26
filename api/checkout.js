@@ -127,7 +127,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const buyEnabled = product.buyEnabled !== false;
+  const buyEnabled = product.buyEnabled === true;
   const priceCents = Number(product.priceCents);
   const currency = String(product.currency || "eur").toLowerCase();
   if (!buyEnabled || !Number.isFinite(priceCents) || priceCents < 50) {
@@ -137,6 +137,19 @@ module.exports = async function handler(req, res) {
       message: "Ce produit n’est pas achetable (prix min. 0,50 €).",
     });
     return;
+  }
+
+  const stockRaw = product.stock;
+  if (stockRaw != null && stockRaw !== "") {
+    const stock = Number(stockRaw);
+    if (!Number.isFinite(stock) || stock <= 0) {
+      json(res, 409, {
+        ok: false,
+        error: "out_of_stock",
+        message: "Produit en rupture de stock.",
+      });
+      return;
+    }
   }
 
   const origin = siteOrigin(req);
@@ -167,6 +180,7 @@ module.exports = async function handler(req, res) {
       cancel_url: `${origin}/boutique?checkout=cancel`,
       metadata: {
         productId: String(product.id),
+        quantity: "1",
         source: "niels-shop",
       },
     });

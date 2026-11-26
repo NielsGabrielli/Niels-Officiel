@@ -886,12 +886,21 @@ function renderShop(data) {
   mount.innerHTML = items.map((p) => buildProductCardHtml(p)).join("");
 }
 
+function productStockValue(product) {
+  if (!product || product.stock == null || product.stock === "") return null;
+  const n = Number(product.stock);
+  return Number.isFinite(n) ? Math.floor(n) : null;
+}
+
 function productIsBuyable(product) {
   if (!product || product.published === false || product.buyEnabled !== true) {
     return false;
   }
   const cents = Number(product.priceCents);
-  return Number.isFinite(cents) && cents >= 50;
+  if (!Number.isFinite(cents) || cents < 50) return false;
+  const stock = productStockValue(product);
+  if (stock != null && stock <= 0) return false;
+  return true;
 }
 
 async function startShopCheckout(productId) {
@@ -920,9 +929,11 @@ async function startShopCheckout(productId) {
     if (!res.ok || !data.ok || !data.url) {
       const msg =
         data.message ||
-        (data.error === "stripe_not_configured"
-          ? "Paiement non configuré (clé Stripe manquante)."
-          : "Impossible de démarrer le paiement.");
+        (data.error === "out_of_stock"
+          ? "Produit en rupture de stock."
+          : data.error === "stripe_not_configured"
+            ? "Paiement non configuré (clé Stripe manquante)."
+            : "Impossible de démarrer le paiement.");
       if (hint) {
         hint.textContent = msg;
         hint.removeAttribute("hidden");
@@ -1024,8 +1035,19 @@ function openShopModal(product) {
     }
   }
   if (buyHint) {
-    buyHint.textContent = "";
-    buyHint.setAttribute("hidden", "");
+    const stock = productStockValue(product);
+    if (
+      product &&
+      product.buyEnabled === true &&
+      stock != null &&
+      stock <= 0
+    ) {
+      buyHint.textContent = "Rupture de stock.";
+      buyHint.removeAttribute("hidden");
+    } else {
+      buyHint.textContent = "";
+      buyHint.setAttribute("hidden", "");
+    }
   }
 
   shopModalLastFocus = document.activeElement;

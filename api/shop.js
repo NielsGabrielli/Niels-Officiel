@@ -150,6 +150,12 @@ function normalizeProduct(p) {
     Number.isFinite(priceCentsRaw) && priceCentsRaw > 0
       ? Math.round(priceCentsRaw)
       : null;
+  const stockRaw = p.stock;
+  let stock = null;
+  if (stockRaw !== "" && stockRaw != null) {
+    const n = Number(stockRaw);
+    if (Number.isFinite(n) && n >= 0) stock = Math.floor(n);
+  }
   return {
     id: String(p.id || "").trim() || `p_${Date.now()}`,
     title: String(p.title || "").trim(),
@@ -158,6 +164,7 @@ function normalizeProduct(p) {
     price: String(p.price || "").trim(),
     priceCents,
     currency: String(p.currency || "eur").trim().toLowerCase() || "eur",
+    stock,
     buyEnabled: p.buyEnabled === true,
     type: String(p.type || "autre").trim() || "autre",
     image,
