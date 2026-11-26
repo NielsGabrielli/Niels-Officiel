@@ -459,6 +459,19 @@
       gap: 8px;
       align-items: center;
     }
+    .order-copy-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .order-copy-row .form-input {
+      flex: 1;
+      min-width: 0;
+    }
+    .order-copy-row .action-btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
     .shop-image-chip .shop-image-cover {
       display: block;
       margin-top: 4px;
@@ -1401,11 +1414,17 @@
               </div>
               <div class="form-group">
                 <label class="form-label">N° de suivi</label>
-                <input type="text" class="form-input" data-order-field="trackingNumber" value="${escapeHtmlAttr(o.trackingNumber || '')}" placeholder="ex. 3S… / LX…" />
+                <div class="order-copy-row">
+                  <input type="text" class="form-input" data-order-field="trackingNumber" value="${escapeHtmlAttr(o.trackingNumber || '')}" placeholder="ex. 3S… / LX…" />
+                  <button type="button" class="action-btn" data-order-copy="trackingNumber" title="Copier le n° de suivi">Copier</button>
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Lien de suivi (optionnel)</label>
-                <input type="url" class="form-input" data-order-field="trackingUrl" value="${escapeHtmlAttr(o.trackingUrl || '')}" placeholder="https://…" />
+                <div class="order-copy-row">
+                  <input type="url" class="form-input" data-order-field="trackingUrl" value="${escapeHtmlAttr(o.trackingUrl || '')}" placeholder="https://…" />
+                  <button type="button" class="action-btn" data-order-copy="trackingUrl" title="Copier le lien de suivi">Copier</button>
+                </div>
               </div>
               <div class="order-card__actions">
                 <button type="button" class="btn-save" data-order-save>Enregistrer</button>
@@ -1518,7 +1537,33 @@
           if (hint) hint.textContent = 'Échec envoi aperçus e-mail.';
         }
       });
-      document.getElementById('ordersList')?.addEventListener('click', (e) => {
+      document.getElementById('ordersList')?.addEventListener('click', async (e) => {
+        const copyBtn = e.target.closest('[data-order-copy]');
+        if (copyBtn) {
+          const card = copyBtn.closest('[data-order-id]');
+          const field = copyBtn.getAttribute('data-order-copy');
+          const input = card?.querySelector(`[data-order-field="${field}"]`);
+          const value = String(input?.value || '').trim();
+          const hint = document.getElementById('ordersHint');
+          if (!value) {
+            if (hint) hint.textContent = 'Rien à copier.';
+            return;
+          }
+          try {
+            await navigator.clipboard.writeText(value);
+            const prev = copyBtn.textContent;
+            copyBtn.textContent = 'Copié';
+            if (hint) hint.textContent = field === 'trackingNumber' ? 'N° de suivi copié.' : 'Lien de suivi copié.';
+            setTimeout(() => { copyBtn.textContent = prev || 'Copier'; }, 1200);
+          } catch (_) {
+            if (input) {
+              input.focus();
+              input.select();
+            }
+            if (hint) hint.textContent = 'Sélectionné — Cmd+C pour copier.';
+          }
+          return;
+        }
         const btn = e.target.closest('[data-order-save]');
         if (!btn) return;
         const card = btn.closest('[data-order-id]');
