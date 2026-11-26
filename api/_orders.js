@@ -246,46 +246,57 @@ function buildEmailLayout({ title, intro, rowsHtml, noteHtml, cta }) {
   const logoUrl = `${base}/assets/logo-email.png`;
   const ctaHtml = cta
     ? `<tr>
-        <td style="padding:8px 0 0;">
-          <a href="${escapeAttr(cta.href)}" style="display:inline-block;background:#D05033;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:14px 22px;border-radius:999px;">
+        <td style="padding:18px 0 0;font-family:Arial,Helvetica,sans-serif;">
+          <a href="${escapeAttr(cta.href)}" style="display:inline-block;background-color:#D05033;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 20px;">
             ${escapeHtml(cta.label)}
           </a>
         </td>
       </tr>`
     : "";
 
+  // Fond clair + texte foncé : évite le bug Gmail (texte blanc devenu invisible).
   return `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
-<body style="margin:0;padding:0;background:#0f0f0f;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f0f;padding:28px 12px;">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>${escapeHtml(title)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f1ea;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#f4f1ea" style="background-color:#f4f1ea;">
     <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#161616;border:1px solid rgba(229,210,187,0.18);border-radius:16px;overflow:hidden;">
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="560" cellspacing="0" cellpadding="0" bgcolor="#ffffff" style="width:100%;max-width:560px;background-color:#ffffff;border:1px solid #e5d2bb;">
           <tr>
-            <td style="padding:28px 28px 18px;text-align:center;background:linear-gradient(180deg,rgba(208,80,51,0.18),transparent);">
+            <td align="center" bgcolor="#ffffff" style="padding:28px 24px 12px;background-color:#ffffff;">
               <a href="${escapeAttr(base)}" style="text-decoration:none;">
-                <img src="${escapeAttr(logoUrl)}" width="160" alt="Niels" style="display:inline-block;height:auto;border:0;max-width:160px;" />
+                <img src="${escapeAttr(logoUrl)}" width="150" alt="Niels" style="display:block;border:0;height:auto;max-width:150px;" />
               </a>
             </td>
           </tr>
           <tr>
-            <td style="padding:8px 28px 28px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
-              <h1 style="margin:0 0 12px;font-size:24px;line-height:1.25;font-weight:700;color:#ffffff;">${escapeHtml(title)}</h1>
-              <p style="margin:0 0 22px;font-size:15px;line-height:1.55;color:rgba(255,255,255,0.78);">${intro}</p>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f0f;border:1px solid rgba(229,210,187,0.14);border-radius:12px;">
+            <td bgcolor="#ffffff" style="padding:8px 24px 28px;font-family:Arial,Helvetica,sans-serif;background-color:#ffffff;color:#1a1a1a;">
+              <h1 style="margin:0 0 10px;font-size:22px;line-height:1.3;font-weight:700;color:#1a1a1a;">${escapeHtml(title)}</h1>
+              <p style="margin:0 0 18px;font-size:15px;line-height:1.55;color:#444444;">${escapeHtml(intro)}</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#faf7f2" style="background-color:#faf7f2;border:1px solid #eadfce;">
                 <tr>
-                  <td style="padding:18px 18px 8px;">
+                  <td style="padding:16px 16px 4px;font-family:Arial,Helvetica,sans-serif;">
                     ${rowsHtml}
                   </td>
                 </tr>
               </table>
-              ${noteHtml ? `<p style="margin:20px 0 0;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.72);">${noteHtml}</p>` : ""}
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:24px;">
+              ${
+                noteHtml
+                  ? `<p style="margin:18px 0 0;font-size:14px;line-height:1.55;color:#555555;">${escapeHtml(noteHtml)}</p>`
+                  : ""
+              }
+              <table role="presentation" cellspacing="0" cellpadding="0">
                 ${ctaHtml}
               </table>
-              <p style="margin:28px 0 0;font-size:12px;line-height:1.5;color:rgba(229,210,187,0.55);">
-                Boutique officielle · <a href="${escapeAttr(base)}" style="color:#D05033;text-decoration:none;">niels-officiel.fr</a>
+              <p style="margin:24px 0 0;font-size:12px;line-height:1.5;color:#888888;">
+                Boutique officielle · <a href="${escapeAttr(base)}" style="color:#D05033;text-decoration:underline;">niels-officiel.fr</a>
               </p>
             </td>
           </tr>
@@ -299,9 +310,9 @@ function buildEmailLayout({ title, intro, rowsHtml, noteHtml, cta }) {
 
 function emailDetailRow(label, valueHtml) {
   if (!valueHtml) return "";
-  return `<p style="margin:0 0 14px;">
-    <span style="display:block;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(229,210,187,0.55);margin-bottom:4px;">${escapeHtml(label)}</span>
-    <span style="display:block;font-size:15px;line-height:1.45;color:#ffffff;">${valueHtml}</span>
+  return `<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;">
+    <span style="display:block;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:#8a7a66;margin-bottom:4px;">${escapeHtml(label)}</span>
+    <span style="display:block;font-size:15px;line-height:1.45;color:#1a1a1a;">${valueHtml}</span>
   </p>`;
 }
 
