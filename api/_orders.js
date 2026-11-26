@@ -234,14 +234,96 @@ function formatShipping(shipping) {
     .join("\n");
 }
 
+function siteBaseUrl() {
+  return String(process.env.SITE_URL || "https://www.niels-officiel.fr").replace(
+    /\/$/,
+    ""
+  );
+}
+
+function buildEmailLayout({ title, intro, rowsHtml, noteHtml, cta }) {
+  const base = siteBaseUrl();
+  const logoUrl = `${base}/assets/logo-email.png`;
+  const ctaHtml = cta
+    ? `<tr>
+        <td style="padding:8px 0 0;">
+          <a href="${escapeAttr(cta.href)}" style="display:inline-block;background:#D05033;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;padding:14px 22px;border-radius:999px;">
+            ${escapeHtml(cta.label)}
+          </a>
+        </td>
+      </tr>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+<body style="margin:0;padding:0;background:#0f0f0f;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f0f;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#161616;border:1px solid rgba(229,210,187,0.18);border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="padding:28px 28px 18px;text-align:center;background:linear-gradient(180deg,rgba(208,80,51,0.18),transparent);">
+              <a href="${escapeAttr(base)}" style="text-decoration:none;">
+                <img src="${escapeAttr(logoUrl)}" width="160" alt="Niels" style="display:inline-block;height:auto;border:0;max-width:160px;" />
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 28px 28px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
+              <h1 style="margin:0 0 12px;font-size:24px;line-height:1.25;font-weight:700;color:#ffffff;">${escapeHtml(title)}</h1>
+              <p style="margin:0 0 22px;font-size:15px;line-height:1.55;color:rgba(255,255,255,0.78);">${intro}</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0f0f0f;border:1px solid rgba(229,210,187,0.14);border-radius:12px;">
+                <tr>
+                  <td style="padding:18px 18px 8px;">
+                    ${rowsHtml}
+                  </td>
+                </tr>
+              </table>
+              ${noteHtml ? `<p style="margin:20px 0 0;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.72);">${noteHtml}</p>` : ""}
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:24px;">
+                ${ctaHtml}
+              </table>
+              <p style="margin:28px 0 0;font-size:12px;line-height:1.5;color:rgba(229,210,187,0.55);">
+                Boutique officielle · <a href="${escapeAttr(base)}" style="color:#D05033;text-decoration:none;">niels-officiel.fr</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function emailDetailRow(label, valueHtml) {
+  if (!valueHtml) return "";
+  return `<p style="margin:0 0 14px;">
+    <span style="display:block;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(229,210,187,0.55);margin-bottom:4px;">${escapeHtml(label)}</span>
+    <span style="display:block;font-size:15px;line-height:1.45;color:#ffffff;">${valueHtml}</span>
+  </p>`;
+}
+
 async function sendOrderPaidEmails(order) {
   const notify = String(
     process.env.ORDER_NOTIFY_EMAIL || process.env.CONTACT_EMAIL || ""
   ).trim();
   const money = formatMoney(order.amountTotal, order.currency);
   const shipText = formatShipping(order.shipping);
+  const shipHtml = escapeHtml(shipText).replace(/\n/g, "<br/>");
+  const base = siteBaseUrl();
 
   if (order.email) {
+    const rowsHtml = [
+      emailDetailRow("Produit", escapeHtml(order.productTitle)),
+      money ? emailDetailRow("Montant", escapeHtml(money)) : "",
+      order.email ? emailDetailRow("E-mail", escapeHtml(order.email)) : "",
+      shipText && shipText !== "—"
+        ? emailDetailRow("Adresse de livraison", shipHtml)
+        : "",
+    ].join("");
+
     await sendOrderEmail({
       to: order.email,
       subject: `Confirmation de commande — ${order.productTitle}`,
@@ -254,23 +336,40 @@ async function sendOrderPaidEmails(order) {
         `Adresse de livraison :`,
         shipText,
         ``,
-        `Nous vous enverrons un e-mail dès l’expédition.`,
+        `Nous traitons votre commande et vous préviendrons par e-mail dès l’expédition.`,
         `— Boutique Niels`,
+        base,
       ]
         .filter(Boolean)
         .join("\n"),
-      html: `
-        <p>Merci pour votre commande !</p>
-        <p><strong>Produit :</strong> ${escapeHtml(order.productTitle)}<br/>
-        ${money ? `<strong>Montant :</strong> ${escapeHtml(money)}` : ""}</p>
-        <p><strong>Adresse de livraison :</strong><br/>${escapeHtml(shipText).replace(/\n/g, "<br/>")}</p>
-        <p>Nous vous enverrons un e-mail dès l’expédition.</p>
-        <p>— Boutique Niels</p>
-      `,
+      html: buildEmailLayout({
+        title: "Commande confirmée",
+        intro:
+          "Merci pour votre achat. Nous avons bien reçu votre paiement et traitons actuellement votre commande.",
+        rowsHtml,
+        noteHtml:
+          "Vous serez prévenu par e-mail dès l’expédition, avec le numéro de suivi du colis.",
+        cta: { href: base, label: "Retour au site" },
+      }),
     });
   }
 
   if (notify) {
+    const rowsHtml = [
+      emailDetailRow("Produit", escapeHtml(order.productTitle)),
+      money ? emailDetailRow("Montant", escapeHtml(money)) : "",
+      emailDetailRow(
+        "Client",
+        `${escapeHtml(order.name || "—")}<br/>${escapeHtml(order.email || "—")}${
+          order.phone ? `<br/>${escapeHtml(order.phone)}` : ""
+        }`
+      ),
+      shipText && shipText !== "—"
+        ? emailDetailRow("Livraison", shipHtml)
+        : "",
+      order.id ? emailDetailRow("Référence", escapeHtml(order.id)) : "",
+    ].join("");
+
     await sendOrderEmail({
       to: notify,
       subject: `Nouvelle commande — ${order.productTitle}`,
@@ -286,24 +385,38 @@ async function sendOrderPaidEmails(order) {
       ]
         .filter(Boolean)
         .join("\n"),
-      html: `
-        <p><strong>Nouvelle commande boutique</strong></p>
-        <p>Produit : ${escapeHtml(order.productTitle)}<br/>
-        ${money ? `Montant : ${escapeHtml(money)}<br/>` : ""}
-        Client : ${escapeHtml(order.name || "—")} &lt;${escapeHtml(order.email || "—")}&gt;<br/>
-        ${order.phone ? `Tél : ${escapeHtml(order.phone)}<br/>` : ""}
-        ID : ${escapeHtml(order.id)}</p>
-        <p>Livraison :<br/>${escapeHtml(shipText).replace(/\n/g, "<br/>")}</p>
-      `,
+      html: buildEmailLayout({
+        title: "Nouvelle commande",
+        intro: "Une commande vient d’être payée sur la boutique.",
+        rowsHtml,
+        noteHtml: "",
+        cta: { href: `${base}/admin`, label: "Voir l’admin" },
+      }),
     });
   }
 }
 
 async function sendOrderShippedEmail(order) {
   if (!order?.email) return { sent: false, reason: "no_email" };
-  const tracking =
+  const base = siteBaseUrl();
+  const trackingText =
     order.trackingUrl ||
     (order.trackingNumber ? `N° de suivi : ${order.trackingNumber}` : "");
+  const trackingHtml = order.trackingUrl
+    ? `<a href="${escapeAttr(order.trackingUrl)}" style="color:#D05033;text-decoration:none;font-weight:700;">Suivre mon colis</a>${
+        order.trackingNumber
+          ? `<br/><span style="color:rgba(255,255,255,0.75);">N° ${escapeHtml(order.trackingNumber)}</span>`
+          : ""
+      }`
+    : order.trackingNumber
+      ? escapeHtml(order.trackingNumber)
+      : "";
+
+  const rowsHtml = [
+    emailDetailRow("Produit", escapeHtml(order.productTitle)),
+    trackingHtml ? emailDetailRow("Suivi", trackingHtml) : "",
+  ].join("");
+
   return sendOrderEmail({
     to: order.email,
     subject: `Votre commande a été expédiée — ${order.productTitle}`,
@@ -311,24 +424,23 @@ async function sendOrderShippedEmail(order) {
       `Bonne nouvelle : votre commande a été expédiée.`,
       ``,
       `Produit : ${order.productTitle}`,
-      tracking,
+      trackingText,
       ``,
       `— Boutique Niels`,
+      base,
     ]
       .filter(Boolean)
       .join("\n"),
-    html: `
-      <p>Bonne nouvelle : votre commande a été expédiée.</p>
-      <p><strong>Produit :</strong> ${escapeHtml(order.productTitle)}</p>
-      ${
-        order.trackingUrl
-          ? `<p><a href="${escapeAttr(order.trackingUrl)}">Suivre mon colis</a></p>`
-          : order.trackingNumber
-            ? `<p>N° de suivi : <strong>${escapeHtml(order.trackingNumber)}</strong></p>`
-            : ""
-      }
-      <p>— Boutique Niels</p>
-    `,
+    html: buildEmailLayout({
+      title: "Commande expédiée",
+      intro:
+        "Bonne nouvelle : votre colis est en route. Merci pour votre confiance.",
+      rowsHtml,
+      noteHtml: "Conservez cet e-mail pour suivre l’acheminement de votre commande.",
+      cta: order.trackingUrl
+        ? { href: order.trackingUrl, label: "Suivre mon colis" }
+        : { href: base, label: "Retour au site" },
+    }),
   });
 }
 
