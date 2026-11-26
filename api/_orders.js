@@ -151,35 +151,59 @@ async function upsertOrderFromSession(session) {
   return idx >= 0 ? store.orders[idx] : order;
 }
 
+function parseFromEmail(raw) {
+  const value = String(raw || "").trim();
+  const match = value.match(/^(.*)<([^>]+)>$/);
+  if (match) {
+    return {
+      name: match[1].trim().replace(/^"|"$/g, "") || "Boutique Niels",
+      email: match[2].trim(),
+    };
+  }
+  if (value.includes("@")) {
+    return { name: "Boutique Niels", email: value };
+  }
+  return {
+    name: "Boutique Niels",
+    email: "contact@niels-officiel.fr",
+  };
+}
+
 async function sendOrderEmail({ to, subject, html, text }) {
-  const key = process.env.RESEND_API_KEY;
-  const from =
-    process.env.ORDER_FROM_EMAIL ||
-    "Boutique Niels <onboarding@resend.dev>";
+  const key =
+    process.env.BREVO_API_KEY ||
+    process.env.SENDINBLUE_API_KEY ||
+    "";
   if (!key || !to) return { sent: false, reason: "not_configured" };
+
+  const sender = parseFromEmail(
+    process.env.ORDER_FROM_EMAIL || "Boutique Niels <contact@niels-officiel.fr>"
+  );
+
   try {
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
+        accept: "application/json",
+        "content-type": "application/json",
+        "api-key": key,
       },
       body: JSON.stringify({
-        from,
-        to: [to],
+        sender,
+        to: [{ email: String(to).trim() }],
         subject,
-        html,
-        text,
+        htmlContent: html,
+        textContent: text,
       }),
     });
     if (!res.ok) {
       const body = await res.text();
-      console.error("resend email failed", res.status, body);
+      console.error("brevo email failed", res.status, body);
       return { sent: false, reason: "provider_error" };
     }
     return { sent: true };
   } catch (err) {
-    console.error("resend email", err);
+    console.error("brevo email", err);
     return { sent: false, reason: "network_error" };
   }
 }

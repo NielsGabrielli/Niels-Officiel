@@ -1478,7 +1478,7 @@
             const mailNote = data.email?.sent
               ? ' Client notifié.'
               : (notifyCustomer && status === 'shipped'
-                ? ' (e-mail client non envoyé : configurez RESEND_API_KEY pour les mails de suivi).'
+                ? ' (e-mail client non envoyé : configurez BREVO_API_KEY pour les mails de suivi).'
                 : '');
             hint.textContent = `Commande mise à jour.${mailNote}`;
           }
