@@ -130,11 +130,22 @@ module.exports = async function handler(req, res) {
   const buyEnabled = product.buyEnabled === true;
   const priceCents = Number(product.priceCents);
   const currency = String(product.currency || "eur").toLowerCase();
+  const availability = String(product.availability || "")
+    .trim()
+    .toLowerCase();
   if (!buyEnabled || !Number.isFinite(priceCents) || priceCents < 50) {
     json(res, 400, {
       ok: false,
       error: "product_not_for_sale",
       message: "Ce produit n’est pas achetable (prix min. 0,50 €).",
+    });
+    return;
+  }
+  if (availability === "rupture") {
+    json(res, 409, {
+      ok: false,
+      error: "out_of_stock",
+      message: "Produit en rupture de stock.",
     });
     return;
   }

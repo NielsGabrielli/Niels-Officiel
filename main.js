@@ -892,10 +892,18 @@ function productStockValue(product) {
   return Number.isFinite(n) ? Math.floor(n) : null;
 }
 
+function productAvailabilityValue(product) {
+  const v = String(product?.availability || "").trim().toLowerCase();
+  return ["disponible", "precommande", "rupture", "bientot"].includes(v)
+    ? v
+    : "";
+}
+
 function productIsBuyable(product) {
   if (!product || product.published === false || product.buyEnabled !== true) {
     return false;
   }
+  if (productAvailabilityValue(product) === "rupture") return false;
   const cents = Number(product.priceCents);
   if (!Number.isFinite(cents) || cents < 50) return false;
   const stock = productStockValue(product);
@@ -904,26 +912,20 @@ function productIsBuyable(product) {
 }
 
 function productAvailabilityLabel(product) {
-  if (!product || product.published === false) {
-    return { text: "Indisponible", available: false };
+  const value = productAvailabilityValue(product);
+  if (!value) return null;
+  switch (value) {
+    case "disponible":
+      return { text: "Disponible", available: true };
+    case "precommande":
+      return { text: "Pré-vente", available: true };
+    case "bientot":
+      return { text: "Bientôt disponible", available: false };
+    case "rupture":
+      return { text: "Rupture de stock", available: false };
+    default:
+      return null;
   }
-  const stock = productStockValue(product);
-  if (stock != null && stock <= 0) {
-    return { text: "Rupture de stock", available: false };
-  }
-  if (product.buyEnabled === true && productIsBuyable(product)) {
-    if (stock != null && stock > 0) {
-      return {
-        text: stock === 1 ? "Disponible — 1 exemplaire" : `Disponible — ${stock} en stock`,
-        available: true,
-      };
-    }
-    return { text: "Disponible", available: true };
-  }
-  if (stock != null && stock > 0) {
-    return { text: "Disponible à la consultation", available: true };
-  }
-  return { text: "Indisponible à l’achat", available: false };
 }
 
 async function startShopCheckout(productId) {
@@ -1021,10 +1023,19 @@ function openShopModal(product) {
   }
   if (availabilityEl) {
     const availability = productAvailabilityLabel(product);
-    availabilityEl.textContent = availability.text;
-    availabilityEl.classList.toggle("is-available", availability.available);
-    availabilityEl.classList.toggle("is-unavailable", !availability.available);
-    availabilityEl.removeAttribute("hidden");
+    const availabilityValue = productAvailabilityValue(product);
+    if (availability) {
+      availabilityEl.textContent = availability.text;
+      availabilityEl.dataset.status = availabilityValue;
+      availabilityEl.classList.toggle("is-available", availability.available);
+      availabilityEl.classList.toggle("is-unavailable", !availability.available);
+      availabilityEl.removeAttribute("hidden");
+    } else {
+      availabilityEl.textContent = "";
+      availabilityEl.removeAttribute("data-status");
+      availabilityEl.classList.remove("is-available", "is-unavailable");
+      availabilityEl.setAttribute("hidden", "");
+    }
   }
   if (mediaEl) {
     if (imgPath) {

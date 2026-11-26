@@ -768,10 +768,20 @@
           <label class="form-label" for="shopModalCmsPageUrl">URL fiche CMS (optionnel)</label>
           <input type="text" class="form-input" id="shopModalCmsPageUrl" placeholder="/produit/slug" />
         </div>
+        <div class="form-group">
+          <label class="form-label" for="shopModalAvailability">Statut affiché sur la fiche</label>
+          <select class="form-input" id="shopModalAvailability">
+            <option value="">Ne pas afficher</option>
+            <option value="disponible">Disponible</option>
+            <option value="precommande">Pré-vente / Précommande</option>
+            <option value="bientot">Bientôt disponible</option>
+            <option value="rupture">Rupture de stock</option>
+          </select>
+        </div>
         <div style="display:flex; flex-wrap:wrap; gap:18px; margin: 4px 0 14px;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,.75); margin:0;">
             <input type="checkbox" id="shopModalPublished" checked />
-            Publié sur le site
+            Affiché sur le site (sinon brouillon)
           </label>
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,.75); margin:0;">
             <input type="checkbox" id="shopModalBuyEnabled" />
@@ -1308,6 +1318,21 @@
         return Math.floor(n);
       }
 
+      function normalizeShopAvailability(value) {
+        const v = String(value || '').trim().toLowerCase();
+        return ['disponible', 'precommande', 'rupture', 'bientot'].includes(v) ? v : '';
+      }
+
+      function shopAvailabilityLabel(value) {
+        switch (normalizeShopAvailability(value)) {
+          case 'disponible': return 'Disponible';
+          case 'precommande': return 'Pré-vente';
+          case 'bientot': return 'Bientôt';
+          case 'rupture': return 'Rupture';
+          default: return '';
+        }
+      }
+
       function normalizeShopProduct(row) {
         const images = normalizeShopImages(row || {});
         const priceCentsRaw = Number(row?.priceCents);
@@ -1320,6 +1345,7 @@
           priceCents: Number.isFinite(priceCentsRaw) && priceCentsRaw > 0 ? Math.round(priceCentsRaw) : null,
           currency: String(row?.currency || 'eur').trim().toLowerCase() || 'eur',
           stock: normalizeShopStock(row?.stock),
+          availability: normalizeShopAvailability(row?.availability),
           buyEnabled: row?.buyEnabled === true,
           type: String(row?.type || 'autre').trim() || 'autre',
           image: images[0] || '',
@@ -1557,11 +1583,12 @@
                   <span class="shop-status-pill">${escapeHtmlText(shopTypeLabel(p.type))}</span>
                   ${p.published !== false ? '<span class="shop-status-pill is-active">Publié</span>' : '<span class="shop-status-pill">Brouillon</span>'}
                   ${p.buyEnabled ? '<span class="shop-status-pill is-active">Stripe</span>' : ''}
+                  ${shopAvailabilityLabel(p.availability)
+                    ? `<span class="shop-status-pill">${escapeHtmlText(shopAvailabilityLabel(p.availability))}</span>`
+                    : ''}
                   ${p.stock == null
                     ? ''
-                    : p.stock <= 0
-                      ? '<span class="shop-status-pill">Rupture</span>'
-                      : `<span class="shop-status-pill">Stock ${escapeHtmlText(String(p.stock))}</span>`}
+                    : `<span class="shop-status-pill">Stock ${escapeHtmlText(String(p.stock))}</span>`}
                 </div>
                 <p class="shop-product-card__price">${escapeHtmlText(p.price || '—')}</p>
                 <div class="shop-product-card__actions">
@@ -1652,6 +1679,7 @@
         document.getElementById('shopModalPriceCents').value = product.priceCents != null ? product.priceCents : '';
         document.getElementById('shopModalCurrency').value = product.currency || 'eur';
         document.getElementById('shopModalStock').value = product.stock != null ? product.stock : '';
+        document.getElementById('shopModalAvailability').value = product.availability || '';
         document.getElementById('shopModalCmsPageUrl').value = product.cmsPageUrl;
         document.getElementById('shopModalPublished').checked = product.published !== false;
         document.getElementById('shopModalBuyEnabled').checked = product.buyEnabled === true;
@@ -1681,6 +1709,7 @@
           priceCents: Number.isFinite(priceCents) && priceCents > 0 ? Math.round(priceCents) : null,
           currency: document.getElementById('shopModalCurrency')?.value || 'eur',
           stock: document.getElementById('shopModalStock')?.value,
+          availability: document.getElementById('shopModalAvailability')?.value || '',
           type: document.getElementById('shopModalType')?.value || 'autre',
           cmsPageUrl: document.getElementById('shopModalCmsPageUrl')?.value,
           published: document.getElementById('shopModalPublished')?.checked !== false,

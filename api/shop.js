@@ -156,6 +156,18 @@ function normalizeProduct(p) {
     const n = Number(stockRaw);
     if (Number.isFinite(n) && n >= 0) stock = Math.floor(n);
   }
+  const availabilityRaw = String(p.availability || "")
+    .trim()
+    .toLowerCase();
+  const availabilityAllowed = new Set([
+    "disponible",
+    "precommande",
+    "rupture",
+    "bientot",
+  ]);
+  const availability = availabilityAllowed.has(availabilityRaw)
+    ? availabilityRaw
+    : "";
   return {
     id: String(p.id || "").trim() || `p_${Date.now()}`,
     title: String(p.title || "").trim(),
@@ -165,6 +177,7 @@ function normalizeProduct(p) {
     priceCents,
     currency: String(p.currency || "eur").trim().toLowerCase() || "eur",
     stock,
+    availability,
     buyEnabled: p.buyEnabled === true,
     type: String(p.type || "autre").trim() || "autre",
     image,
