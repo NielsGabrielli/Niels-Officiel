@@ -903,6 +903,29 @@ function productIsBuyable(product) {
   return true;
 }
 
+function productAvailabilityLabel(product) {
+  if (!product || product.published === false) {
+    return { text: "Indisponible", available: false };
+  }
+  const stock = productStockValue(product);
+  if (stock != null && stock <= 0) {
+    return { text: "Rupture de stock", available: false };
+  }
+  if (product.buyEnabled === true && productIsBuyable(product)) {
+    if (stock != null && stock > 0) {
+      return {
+        text: stock === 1 ? "Disponible — 1 exemplaire" : `Disponible — ${stock} en stock`,
+        available: true,
+      };
+    }
+    return { text: "Disponible", available: true };
+  }
+  if (stock != null && stock > 0) {
+    return { text: "Disponible à la consultation", available: true };
+  }
+  return { text: "Indisponible à l’achat", available: false };
+}
+
 async function startShopCheckout(productId) {
   const buyBtn = $("#shopModalBuy");
   const hint = $("#shopModalBuyHint");
@@ -962,6 +985,7 @@ function openShopModal(product) {
   const descEl = $("#shopModalDesc");
   const detailEl = $("#shopModalDetail");
   const priceEl = $("#shopModalPrice");
+  const availabilityEl = $("#shopModalAvailability");
   const mediaEl = $("#shopModalMedia");
   const cmsBtn = $("#shopModalCms");
   const buyBtn = $("#shopModalBuy");
@@ -994,6 +1018,13 @@ function openShopModal(product) {
       priceEl.textContent = "";
       priceEl.setAttribute("hidden", "");
     }
+  }
+  if (availabilityEl) {
+    const availability = productAvailabilityLabel(product);
+    availabilityEl.textContent = availability.text;
+    availabilityEl.classList.toggle("is-available", availability.available);
+    availabilityEl.classList.toggle("is-unavailable", !availability.available);
+    availabilityEl.removeAttribute("hidden");
   }
   if (mediaEl) {
     if (imgPath) {
@@ -1035,19 +1066,8 @@ function openShopModal(product) {
     }
   }
   if (buyHint) {
-    const stock = productStockValue(product);
-    if (
-      product &&
-      product.buyEnabled === true &&
-      stock != null &&
-      stock <= 0
-    ) {
-      buyHint.textContent = "Rupture de stock.";
-      buyHint.removeAttribute("hidden");
-    } else {
-      buyHint.textContent = "";
-      buyHint.setAttribute("hidden", "");
-    }
+    buyHint.textContent = "";
+    buyHint.setAttribute("hidden", "");
   }
 
   shopModalLastFocus = document.activeElement;

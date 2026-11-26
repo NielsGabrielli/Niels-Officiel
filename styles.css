@@ -1336,6 +1336,22 @@ body.shop-modal-open{
 .shop-modal__price{
   margin: 4px 0 8px !important;
 }
+.shop-modal__availability{
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.shop-modal__availability[hidden]{
+  display: none !important;
+}
+.shop-modal__availability.is-available{
+  color: rgba(120, 190, 130, .95);
+}
+.shop-modal__availability.is-unavailable{
+  color: rgba(220, 120, 110, .95);
+}
 .shop-modal__actions{
   display: flex;
   flex-wrap: wrap;
