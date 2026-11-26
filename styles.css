@@ -1128,9 +1128,9 @@ a{color:inherit}
 /* Products (cartes format portrait, taille uniforme) */
 #shop .products{
   display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
-  gap: 16px;
-  max-width: 840px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+  gap: 20px;
+  max-width: 1040px;
   margin-inline: auto;
   width: 100%;
   justify-content: center;
@@ -1977,9 +1977,9 @@ body.newsletter-popup-open{
   .salon{grid-template-columns: 1fr}
   .discography__grid{grid-template-columns: 1fr}
   #shop .products{
-    grid-template-columns: repeat(auto-fit, minmax(200px, 240px));
-    max-width: 560px;
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 300px));
+    max-width: 640px;
+    gap: 18px;
   }
   .split{grid-template-columns: 1fr}
   .table__row{grid-template-columns: 1fr 1.2fr 1fr 120px}
@@ -2078,8 +2078,8 @@ body.newsletter-popup-open{
 
 @media (max-width: 600px){
   #shop .products{
-    grid-template-columns: minmax(0, 260px);
-    max-width: 280px;
+    grid-template-columns: minmax(0, 300px);
+    max-width: 320px;
   }
 }
 
