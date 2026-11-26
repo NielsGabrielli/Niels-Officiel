@@ -265,12 +265,14 @@ async function uploadShopImage({ fileName, contentType, dataBase64 }) {
             : "jpg";
   const pathname = `shop/${Date.now()}-${safeFileName(fileName).replace(/\.[a-z0-9]+$/, "")}.${ext}`;
   const { put } = require("@vercel/blob");
+  // Le store du projet est privé (comme concerts/shop JSON) : pas d'access public.
   const uploaded = await put(pathname, buffer, {
-    access: "public",
+    access: "private",
     contentType: type,
     addRandomSuffix: true,
   });
-  return { url: uploaded.url, pathname: uploaded.pathname };
+  const mediaUrl = `/api/shop-media?p=${encodeURIComponent(uploaded.pathname)}`;
+  return { url: mediaUrl, pathname: uploaded.pathname };
 }
 
 module.exports = async function handler(req, res) {
@@ -346,7 +348,10 @@ module.exports = async function handler(req, res) {
       json(res, 200, { ok: true, ...uploaded });
     } catch (err) {
       console.error("shop uploadImage", err);
-      const code = err && err.code ? err.code : "upload_failed";
+      const name = err && err.name ? String(err.name) : "";
+      const msg = err && err.message ? String(err.message) : "";
+      let code = err && err.code ? err.code : "upload_failed";
+      if (/access/i.test(name) || /access/i.test(msg)) code = "blob_access";
       const status =
         code === "blob_required"
           ? 503
@@ -365,7 +370,9 @@ module.exports = async function handler(req, res) {
                 ? "Type d’image non supporté (JPG, PNG ou WebP)."
                 : code === "empty_file"
                   ? "Fichier image vide."
-                  : "Échec du téléversement. Réessayez avec un JPG plus léger.",
+                  : code === "blob_access"
+                    ? "Le Blob Store n’accepte pas ce mode d’accès. Vérifiez la connexion Storage."
+                    : "Échec du téléversement. Réessayez avec un JPG plus léger.",
       });
     }
     return;

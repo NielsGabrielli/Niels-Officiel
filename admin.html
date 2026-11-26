@@ -1404,35 +1404,55 @@
         const softOk = file.size <= TARGET_BYTES && /^image\/(jpeg|jpg|webp)$/i.test(type);
         if (softOk) return file;
 
+        // resizeWidth évite de décoder un Photoshop 12k×12k en mémoire (sinon OOM → upload brut trop lourd).
         let bitmap;
         try {
-          bitmap = await createImageBitmap(file);
+          bitmap = await createImageBitmap(file, {
+            resizeWidth: MAX_EDGE,
+            resizeQuality: 'high',
+          });
         } catch {
-          return file;
+          try {
+            bitmap = await createImageBitmap(file);
+          } catch {
+            const err = new Error('compress_failed');
+            err.payload = {
+              message: 'Impossible de lire cette image (trop grande). Réduisez-la à ~1600 px avant l’envoi.',
+            };
+            throw err;
+          }
         }
-        const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-        const w = Math.max(1, Math.round(bitmap.width * scale));
-        const h = Math.max(1, Math.round(bitmap.height * scale));
+        const w = bitmap.width;
+        const h = bitmap.height;
+        const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+        const cw = Math.max(1, Math.round(w * scale));
+        const ch = Math.max(1, Math.round(h * scale));
         const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
+        canvas.width = cw;
+        canvas.height = ch;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           bitmap.close();
-          return file;
+          const err = new Error('compress_failed');
+          err.payload = { message: 'Compression image impossible dans ce navigateur.' };
+          throw err;
         }
-        ctx.drawImage(bitmap, 0, 0, w, h);
+        ctx.drawImage(bitmap, 0, 0, cw, ch);
         bitmap.close();
 
         let quality = 0.82;
         let blob = null;
-        for (let i = 0; i < 4; i += 1) {
+        for (let i = 0; i < 5; i += 1) {
           blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
           if (!blob) break;
           if (blob.size <= TARGET_BYTES) break;
           quality -= 0.12;
         }
-        if (!blob || !blob.size) return file;
+        if (!blob || !blob.size) {
+          const err = new Error('compress_failed');
+          err.payload = { message: 'Compression image échouée. Essayez un JPG plus léger.' };
+          throw err;
+        }
         const outName = name.replace(/\.[a-z0-9]+$/i, '') + '.jpg';
         return new File([blob], outName, { type: 'image/jpeg', lastModified: Date.now() });
       }
