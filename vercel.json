@@ -5,12 +5,14 @@
     { "source": "/admin.html", "destination": "/admin", "permanent": true },
     { "source": "/boutique.html", "destination": "/boutique", "permanent": true },
     { "source": "/mentions-legales.html", "destination": "/mentions-legales", "permanent": true },
-    { "source": "/confidentialite.html", "destination": "/confidentialite", "permanent": true }
+    { "source": "/confidentialite.html", "destination": "/confidentialite", "permanent": true },
+    { "source": "/confirmation.html", "destination": "/confirmation", "permanent": true }
   ],
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/boutique", "destination": "/boutique.html" },
     { "source": "/mentions-legales", "destination": "/mentions-legales.html" },
-    { "source": "/confidentialite", "destination": "/confidentialite.html" }
+    { "source": "/confidentialite", "destination": "/confidentialite.html" },
+    { "source": "/confirmation", "destination": "/confirmation.html" }
   ]
 }

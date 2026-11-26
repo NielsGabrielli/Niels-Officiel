@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#D05033" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Confirmation de commande — Niels</title>
+    <meta name="description" content="Confirmation de votre commande sur la boutique officielle de Niels." />
+    <link rel="canonical" href="https://niels-officiel.fr/confirmation" />
+
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" />
+
+    <link rel="stylesheet" href="./dist/tailwind.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+
+  <body class="confirmation-page">
+    <a class="skip" href="#main">Aller au contenu</a>
+
+    <header class="header" id="top" data-elevate>
+      <nav class="nav" aria-label="Navigation principale">
+        <div class="nav__side nav__side--left">
+          <a class="nav__link" href="/#music">Musique</a>
+          <a class="nav__link" href="/#concerts">Concerts</a>
+        </div>
+
+        <a class="nav__brand" href="/" aria-label="Retour à l'accueil">
+          <img src="assets/logo-white.svg" alt="Niels" style="height: 26px; width: auto;" />
+        </a>
+
+        <div class="nav__side nav__side--right">
+          <a class="nav__link" href="/#pro">Espace pro</a>
+          <a class="nav__link" href="/boutique" data-shop-nav>Boutique</a>
+          <a class="nav__link" href="/#contact">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="section confirmation" aria-label="Confirmation de commande">
+        <div class="container confirmation__wrap">
+          <p class="confirmation__kicker">Boutique</p>
+          <h1 class="section__title confirmation__title">Commande confirmée</h1>
+          <p class="body confirmation__lead" id="confirmationLead">
+            Merci. Votre paiement a bien été reçu. Nous traitons votre commande et vous serez prévenu par e-mail dès son expédition.
+          </p>
+
+          <div class="confirmation__card" id="confirmationCard" aria-live="polite">
+            <p class="body body--muted" id="confirmationLoading">Chargement des détails…</p>
+            <div id="confirmationDetails" hidden></div>
+            <p class="body body--muted" id="confirmationError" hidden></p>
+          </div>
+
+          <div class="confirmation__actions">
+            <a class="btn btn--primary" href="/">Retour au site</a>
+            <a class="btn btn--ghost" href="/boutique">Continuer vos achats</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        function escapeHtml(s) {
+          return String(s || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        function formatShipping(ship) {
+          if (!ship) return "";
+          return [
+            ship.name,
+            ship.line1,
+            ship.line2,
+            [ship.postalCode, ship.city].filter(Boolean).join(" "),
+            ship.country,
+          ]
+            .filter(Boolean)
+            .join("<br/>");
+        }
+
+        async function loadConfirmation() {
+          const loading = document.getElementById("confirmationLoading");
+          const details = document.getElementById("confirmationDetails");
+          const error = document.getElementById("confirmationError");
+          const params = new URLSearchParams(window.location.search);
+          const sessionId = params.get("session_id") || "";
+
+          if (!sessionId) {
+            if (loading) loading.hidden = true;
+            if (error) {
+              error.hidden = false;
+              error.textContent =
+                "Commande introuvable. Si vous avez bien payé, vérifiez votre e-mail de confirmation Stripe.";
+            }
+            return;
+          }
+
+          try {
+            const res = await fetch(
+              "/api/checkout-session?session_id=" + encodeURIComponent(sessionId),
+              { cache: "no-store" }
+            );
+            const data = await res.json().catch(function () {
+              return {};
+            });
+            if (loading) loading.hidden = true;
+            if (!res.ok || !data.ok || !data.order) {
+              if (error) {
+                error.hidden = false;
+                error.textContent =
+                  "Impossible d’afficher le détail. Votre paiement peut tout de même être validé — consultez votre e-mail.";
+              }
+              return;
+            }
+
+            const o = data.order;
+            const shipHtml = formatShipping(o.shipping);
+            details.innerHTML =
+              '<dl class="confirmation__dl">' +
+              "<div><dt>Produit</dt><dd>" +
+              escapeHtml(o.productTitle || "Produit") +
+              "</dd></div>" +
+              (o.amountLabel
+                ? "<div><dt>Montant</dt><dd>" + escapeHtml(o.amountLabel) + "</dd></div>"
+                : "") +
+              (o.email
+                ? "<div><dt>E-mail</dt><dd>" + escapeHtml(o.email) + "</dd></div>"
+                : "") +
+              (o.phone
+                ? "<div><dt>Téléphone</dt><dd>" + escapeHtml(o.phone) + "</dd></div>"
+                : "") +
+              (shipHtml
+                ? "<div><dt>Livraison</dt><dd>" + shipHtml + "</dd></div>"
+                : "") +
+              "</dl>" +
+              '<p class="confirmation__note">Nous traitons actuellement votre commande. Un e-mail de confirmation de paiement vous a été (ou va vous être) envoyé, puis un second message dès l’expédition avec le suivi du colis.</p>';
+            details.hidden = false;
+          } catch (_) {
+            if (loading) loading.hidden = true;
+            if (error) {
+              error.hidden = false;
+              error.textContent =
+                "Impossible de charger la confirmation. Vérifiez votre boîte mail.";
+            }
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadConfirmation);
+      })();
+    </script>
+  </body>
+</html>
