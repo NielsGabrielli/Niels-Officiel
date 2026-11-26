@@ -83,16 +83,13 @@ module.exports = async function handler(req, res) {
 
   const listIdRaw = process.env.BREVO_NEWSLETTER_LIST_ID;
   const listId = listIdRaw ? Number(listIdRaw) : null;
+  // Pas d'attributs custom (SOURCE/OPT_IN) : ils cassent l'API s'ils n'existent pas dans Brevo.
   const payload = {
     email,
     updateEnabled: true,
-    attributes: {
-      SOURCE: source || "soundletter",
-      OPT_IN: true,
-    },
   };
   if (Number.isFinite(listId) && listId > 0) {
-    payload.listIds = [listId];
+    payload.listIds = [Math.floor(listId)];
   }
 
   try {
@@ -106,9 +103,9 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify(payload),
     });
 
-    // 201 created, 204 updated (updateEnabled), 400 duplicate souvent OK
+    // 201 created, 204 updated (updateEnabled)
     if (brevoRes.status === 201 || brevoRes.status === 204) {
-      json(res, 200, { ok: true });
+      json(res, 200, { ok: true, source: source || "soundletter" });
       return;
     }
 
@@ -118,23 +115,35 @@ module.exports = async function handler(req, res) {
     } catch {
       /* ignore */
     }
-    const code = errBody?.code || "";
+    const code = String(errBody?.code || "");
+    const brevoMsg = String(errBody?.message || "");
     if (
       brevoRes.status === 400 &&
-      (code === "duplicate_parameter" || /already|exist/i.test(String(errBody?.message || "")))
+      (code === "duplicate_parameter" || /already|exist|duplicate/i.test(brevoMsg))
     ) {
       json(res, 200, { ok: true, alreadySubscribed: true });
       return;
     }
 
     console.error("brevo newsletter", brevoRes.status, errBody);
+
+    let message = "Impossible d’enregistrer l’inscription pour le moment.";
+    if (brevoRes.status === 401 || code === "unauthorized") {
+      message =
+        "Clé Brevo sans droit Contacts. Régénère une clé avec permission Contacts (Lecture/Écriture).";
+    } else if (/list/i.test(brevoMsg) || /listIds/i.test(brevoMsg)) {
+      message =
+        "Liste Brevo introuvable. Vérifie BREVO_NEWSLETTER_LIST_ID (ex. 18).";
+    } else if (brevoMsg) {
+      message = brevoMsg;
+    }
+
     json(res, 502, {
       ok: false,
       error: "brevo_failed",
-      message:
-        code === "unauthorized" || brevoRes.status === 401
-          ? "Clé Brevo sans droit Contacts. Ajoutez la permission Contacts à la clé API."
-          : "Impossible d’enregistrer l’inscription pour le moment.",
+      message,
+      brevoStatus: brevoRes.status,
+      brevoCode: code || undefined,
     });
   } catch (err) {
     console.error("brevo newsletter network", err);
