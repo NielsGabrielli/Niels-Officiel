@@ -896,12 +896,13 @@
         <h3>Réception des formulaires</h3>
         <div class="form-group">
           <label class="form-label">Email de réception (Contact et Espace pro)</label>
-          <input type="email" class="form-input" value="contact@niels-officiel.fr" />
+          <input type="email" class="form-input" value="contact@niels-officiel.fr" disabled />
         </div>
-        <div class="form-group">
-          <label class="form-label">URL d'intégration Newsletter (Mailchimp, Brevo, etc.)</label>
-          <input type="url" class="form-input" placeholder="https://..." />
-        </div>
+        <p style="margin:0; font-size:13px; color:rgba(255,255,255,.55); line-height:1.5;">
+          La Soundletter est branchée sur <strong>Brevo</strong> via <code>BREVO_API_KEY</code>
+          et optionnellement <code>BREVO_NEWSLETTER_LIST_ID</code> (ID de la liste Contacts).
+          La clé API doit avoir le droit <strong>Contacts</strong> (pas seulement e-mails transactionnels).
+        </p>
       </div>
       <div class="admin-card">
         <h3>Texte Soundletter</h3>

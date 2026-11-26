@@ -35,24 +35,60 @@ function fitHeroTitleToSubtitle() {
 }
 
 /* ── Forms ── */
-function submitNewsletterForm(form, hintEl, { onSuccess } = {}) {
+async function submitNewsletterForm(form, hintEl, { onSuccess, source } = {}) {
   const data = new FormData(form);
   const email = String(data.get("email") || "").trim();
   const consent = Boolean(data.get("consent"));
   if (!email) {
-    if (hintEl) hintEl.textContent = "Ajoute un email pour t'inscrire.";
+    if (hintEl) hintEl.textContent = "Ajoute un email pour t’inscrire.";
     return false;
   }
   if (!consent) {
     if (hintEl) hintEl.textContent = "Merci de cocher le consentement.";
     return false;
   }
-  if (hintEl) {
-    hintEl.textContent =
-      "Inscription en mode maquette (aucun envoi). Connecte à Mailchimp/Brevo ensuite.";
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+  if (hintEl) hintEl.textContent = "Inscription en cours…";
+
+  try {
+    const res = await fetch("/api/newsletter", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        consent: true,
+        source: source || form.id || "soundletter",
+      }),
+    });
+    let payload = {};
+    try {
+      payload = await res.json();
+    } catch {
+      /* ignore */
+    }
+    if (!res.ok || !payload.ok) {
+      if (hintEl) {
+        hintEl.textContent =
+          payload.message || "Impossible de t’inscrire pour le moment.";
+      }
+      return false;
+    }
+    if (hintEl) {
+      hintEl.textContent = payload.alreadySubscribed
+        ? "Tu es déjà inscrit·e à la Soundletter."
+        : "Merci ! Tu es inscrit·e à la Soundletter.";
+    }
+    form.reset();
+    if (onSuccess) onSuccess();
+    return true;
+  } catch {
+    if (hintEl) hintEl.textContent = "Impossible de joindre le serveur.";
+    return false;
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
   }
-  if (onSuccess) onSuccess();
-  return true;
 }
 
 function wireForms() {
@@ -70,7 +106,9 @@ function wireForms() {
   if (newsletterForm && newsletterHint) {
     newsletterForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      submitNewsletterForm(newsletterForm, newsletterHint);
+      submitNewsletterForm(newsletterForm, newsletterHint, {
+        source: "soundletter-page",
+      });
     });
   }
 }
@@ -387,6 +425,7 @@ function wireCookieAndNewsletterPopup() {
   popupForm?.addEventListener("submit", (e) => {
     e.preventDefault();
     submitNewsletterForm(popupForm, popupHint, {
+      source: "soundletter-popup",
       onSuccess: () => {
         writeNewsletterPopupState({ subscribed: true, dismissed: true });
         window.setTimeout(() => closeNewsletterPopup(false), 1800);
