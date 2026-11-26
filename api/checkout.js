@@ -171,6 +171,11 @@ module.exports = async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       locale: "fr",
+      billing_address_collection: "required",
+      phone_number_collection: { enabled: true },
+      shipping_address_collection: {
+        allowed_countries: ["FR", "BE", "CH", "LU", "MC", "DE", "IT", "ES", "PT", "GB", "CA"],
+      },
       line_items: [
         {
           quantity: 1,
@@ -191,6 +196,7 @@ module.exports = async function handler(req, res) {
       cancel_url: `${origin}/boutique?checkout=cancel`,
       metadata: {
         productId: String(product.id),
+        productTitle: String(product.title || "Produit Niels").slice(0, 120),
         quantity: "1",
         source: "niels-shop",
       },

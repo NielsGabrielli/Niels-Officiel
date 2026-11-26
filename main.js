@@ -1160,7 +1160,7 @@ function showCheckoutBanner(kind) {
   el.setAttribute("role", "status");
   el.textContent =
     kind === "success"
-      ? "Paiement test réussi. Merci ! (mode Stripe test)"
+      ? "Paiement réussi. Merci ! Un e-mail de confirmation vous sera envoyé."
       : "Paiement annulé. Vous pouvez réessayer quand vous voulez.";
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 7000);

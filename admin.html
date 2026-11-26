@@ -412,6 +412,53 @@
       cursor: pointer;
       line-height: 1;
     }
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .order-card {
+      border: 1px solid rgba(229,210,187,.14);
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      padding: 14px 16px;
+      display: grid;
+      gap: 12px;
+    }
+    @media (min-width: 900px) {
+      .order-card {
+        grid-template-columns: 1.2fr 1fr;
+      }
+    }
+    .order-card__title {
+      margin: 0 0 6px;
+      font-size: 15px;
+      color: #fff;
+    }
+    .order-card__meta {
+      margin: 0;
+      font-size: 12px;
+      color: rgba(255,255,255,.55);
+      line-height: 1.5;
+    }
+    .order-card__ship {
+      margin: 8px 0 0;
+      font-size: 12px;
+      color: rgba(229,210,187,.78);
+      white-space: pre-line;
+      line-height: 1.45;
+    }
+    .order-card__fields {
+      display: grid;
+      gap: 10px;
+    }
+    .order-card__fields .form-group { margin: 0; }
+    .order-card__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
     .shop-image-chip .shop-image-cover {
       display: block;
       margin-top: 4px;
@@ -528,6 +575,7 @@
       <a href="#tab-discographie" class="nav-item" data-target="tab-discographie">Section Discographie</a>
       <a href="#tab-concerts" class="nav-item" data-target="tab-concerts">Section Concerts</a>
       <a href="#tab-boutique" class="nav-item" data-target="tab-boutique">Section Boutique</a>
+      <a href="#tab-commandes" class="nav-item" data-target="tab-commandes">Commandes</a>
       <a href="#tab-contact" class="nav-item" data-target="tab-contact">Paramètres Contact</a>
       <a href="#tab-securite" class="nav-item" data-target="tab-securite">Sécurité</a>
     </nav>
@@ -805,6 +853,24 @@
           <button type="button" class="action-btn" data-shop-modal-close>Annuler</button>
           <button type="button" class="btn-save" id="shopModalSaveBtn">Enregistrer le produit</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Commandes Tab -->
+    <div id="tab-commandes" class="tab-content">
+      <div class="admin-card">
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
+          <div>
+            <h3 style="margin:0;">Commandes boutique</h3>
+            <p style="margin:8px 0 0; font-size:13px; color:rgba(255,255,255,.55); max-width:56ch;">
+              Les commandes arrivent ici après un paiement Stripe réussi (webhook). Mets à jour le statut et le n° de suivi à l’expédition.
+            </p>
+          </div>
+          <button type="button" class="action-btn" id="ordersRefreshBtn">Actualiser</button>
+        </div>
+        <p id="ordersHint" style="margin:14px 0 0; font-size:12px; color:rgba(255,255,255,.45);"></p>
+        <div id="ordersList" class="orders-list" style="margin-top:18px;"></div>
+        <p id="ordersEmpty" style="display:none; margin:12px 0 0; font-size:13px; color:rgba(255,255,255,.45);">Aucune commande pour le moment.</p>
       </div>
     </div>
 
@@ -1255,7 +1321,180 @@
           // Show target content
           const targetId = item.getAttribute('data-target');
           document.getElementById(targetId).classList.add('active');
+          if (targetId === 'tab-commandes') loadOrdersAdmin();
         });
+      });
+
+      let ordersState = [];
+
+      function orderStatusLabel(status) {
+        switch (String(status || '')) {
+          case 'paid': return 'Payée';
+          case 'preparing': return 'En préparation';
+          case 'shipped': return 'Expédiée';
+          case 'delivered': return 'Livrée';
+          case 'cancelled': return 'Annulée';
+          default: return status || '—';
+        }
+      }
+
+      function formatOrderMoney(cents, currency) {
+        const amount = Number(cents);
+        if (!Number.isFinite(amount)) return '—';
+        try {
+          return new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: String(currency || 'eur').toUpperCase(),
+          }).format(amount / 100);
+        } catch (_) {
+          return `${(amount / 100).toFixed(2)} ${String(currency || 'eur').toUpperCase()}`;
+        }
+      }
+
+      function formatOrderShipping(ship) {
+        if (!ship) return '—';
+        return [
+          ship.name,
+          ship.line1,
+          ship.line2,
+          [ship.postalCode, ship.city].filter(Boolean).join(' '),
+          ship.country,
+        ].filter(Boolean).join('\n') || '—';
+      }
+
+      function renderOrdersAdmin() {
+        const list = document.getElementById('ordersList');
+        const empty = document.getElementById('ordersEmpty');
+        if (!list) return;
+        if (!ordersState.length) {
+          list.innerHTML = '';
+          if (empty) empty.style.display = 'block';
+          return;
+        }
+        if (empty) empty.style.display = 'none';
+        list.innerHTML = ordersState.map((o) => `
+          <article class="order-card" data-order-id="${escapeHtmlAttr(o.id)}">
+            <div>
+              <h4 class="order-card__title">${escapeHtmlText(o.productTitle || 'Commande')}</h4>
+              <p class="order-card__meta">
+                ${escapeHtmlText(formatOrderMoney(o.amountTotal, o.currency))}
+                · ${escapeHtmlText(orderStatusLabel(o.status))}<br/>
+                ${escapeHtmlText(o.name || '—')} · ${escapeHtmlText(o.email || '—')}
+                ${o.phone ? `<br/>Tél. ${escapeHtmlText(o.phone)}` : ''}<br/>
+                ${escapeHtmlText(o.createdAt ? new Date(o.createdAt).toLocaleString('fr-FR') : '')}
+              </p>
+              <p class="order-card__ship">${escapeHtmlText(formatOrderShipping(o.shipping))}</p>
+            </div>
+            <div class="order-card__fields">
+              <div class="form-group">
+                <label class="form-label">Statut</label>
+                <select class="form-input" data-order-field="status">
+                  <option value="paid" ${o.status === 'paid' ? 'selected' : ''}>Payée</option>
+                  <option value="preparing" ${o.status === 'preparing' ? 'selected' : ''}>En préparation</option>
+                  <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Expédiée</option>
+                  <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Livrée</option>
+                  <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Annulée</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">N° de suivi</label>
+                <input type="text" class="form-input" data-order-field="trackingNumber" value="${escapeHtmlAttr(o.trackingNumber || '')}" placeholder="ex. 3S… / LX…" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Lien de suivi (optionnel)</label>
+                <input type="url" class="form-input" data-order-field="trackingUrl" value="${escapeHtmlAttr(o.trackingUrl || '')}" placeholder="https://…" />
+              </div>
+              <div class="order-card__actions">
+                <button type="button" class="btn-save" data-order-save>Enregistrer</button>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:rgba(255,255,255,.65); margin:0;">
+                  <input type="checkbox" data-order-notify ${o.status === 'shipped' ? '' : 'checked'} />
+                  Notifier le client (si expédiée)
+                </label>
+              </div>
+            </div>
+          </article>
+        `).join('');
+      }
+
+      async function loadOrdersAdmin() {
+        const hint = document.getElementById('ordersHint');
+        if (hint) hint.textContent = 'Chargement…';
+        try {
+          const res = await fetch('/api/orders', { credentials: 'same-origin', cache: 'no-store' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) {
+            if (hint) {
+              hint.textContent = data.error === 'unauthorized'
+                ? 'Session expirée. Reconnectez-vous.'
+                : (data.message || 'Impossible de charger les commandes.');
+            }
+            return;
+          }
+          ordersState = Array.isArray(data.orders) ? data.orders : [];
+          renderOrdersAdmin();
+          if (hint) {
+            hint.textContent = ordersState.length
+              ? `${ordersState.length} commande${ordersState.length > 1 ? 's' : ''}.`
+              : 'Aucune commande enregistrée pour l’instant.';
+          }
+        } catch (_) {
+          if (hint) hint.textContent = 'Impossible de joindre le serveur commandes.';
+        }
+      }
+
+      async function saveOrderCard(card) {
+        const id = card?.getAttribute('data-order-id');
+        if (!id) return;
+        const hint = document.getElementById('ordersHint');
+        const status = card.querySelector('[data-order-field="status"]')?.value || 'paid';
+        const trackingNumber = card.querySelector('[data-order-field="trackingNumber"]')?.value || '';
+        const trackingUrl = card.querySelector('[data-order-field="trackingUrl"]')?.value || '';
+        const notifyCustomer = card.querySelector('[data-order-notify]')?.checked === true;
+        const btn = card.querySelector('[data-order-save]');
+        if (btn) btn.disabled = true;
+        try {
+          const res = await fetch('/api/orders', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'update',
+              id,
+              status,
+              trackingNumber,
+              trackingUrl,
+              notifyCustomer,
+            }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok) {
+            alert(data.message || 'Enregistrement impossible.');
+            return;
+          }
+          const idx = ordersState.findIndex((o) => o.id === id);
+          if (idx >= 0) ordersState[idx] = data.order;
+          renderOrdersAdmin();
+          if (hint) {
+            const mailNote = data.email?.sent
+              ? ' Client notifié.'
+              : (notifyCustomer && status === 'shipped'
+                ? ' (e-mail client non envoyé : configurez RESEND_API_KEY pour les mails de suivi).'
+                : '');
+            hint.textContent = `Commande mise à jour.${mailNote}`;
+          }
+        } catch (_) {
+          alert('Impossible de joindre le serveur.');
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      document.getElementById('ordersRefreshBtn')?.addEventListener('click', loadOrdersAdmin);
+      document.getElementById('ordersList')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-order-save]');
+        if (!btn) return;
+        const card = btn.closest('[data-order-id]');
+        if (card) saveOrderCard(card);
       });
       
       const CONCERTS_KEY = 'niels_concerts_v1';

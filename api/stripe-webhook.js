@@ -1,4 +1,8 @@
 const SHOP_BLOB_PATH = "niels-shop.json";
+const {
+  upsertOrderFromSession,
+  sendOrderPaidEmails,
+} = require("./_orders");
 
 function json(res, status, body) {
   res.statusCode = status;
@@ -97,10 +101,25 @@ module.exports = async function handler(req, res) {
 
   try {
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
+      let session = event.data.object;
+      try {
+        session = await stripe.checkout.sessions.retrieve(session.id, {
+          expand: ["line_items"],
+        });
+      } catch (err) {
+        console.error("stripe session retrieve", err);
+      }
+
       const productId = session?.metadata?.productId;
       const qty = session?.metadata?.quantity || 1;
       if (productId) await decrementStock(productId, qty);
+
+      try {
+        const order = await upsertOrderFromSession(session);
+        if (order) await sendOrderPaidEmails(order);
+      } catch (err) {
+        console.error("stripe webhook save order", err);
+      }
     }
   } catch (err) {
     console.error("stripe webhook handle", err);
