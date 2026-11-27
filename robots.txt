@@ -1,2 +1,10 @@
 User-agent: *
 Allow: /
+
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /confirmation
+Disallow: /confirmation.html
+Disallow: /api/
+
+Sitemap: https://www.niels-officiel.fr/sitemap.xml
